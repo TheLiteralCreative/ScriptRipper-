@@ -6,8 +6,13 @@ import google.generativeai as genai
 from app.services.llm.base import BaseLLMProvider, LLMResponse
 
 
-# Gemini pricing per 1M tokens (as of 2024)
+# Gemini pricing per 1M tokens (as of 2025)
 GEMINI_PRICING = {
+    "models/gemini-2.5-flash": {"input": 0.35, "output": 1.05},
+    "models/gemini-2.5-pro": {"input": 3.50, "output": 10.50},
+    "models/gemini-flash-latest": {"input": 0.35, "output": 1.05},
+    "models/gemini-pro-latest": {"input": 3.50, "output": 10.50},
+    # Legacy models (deprecated)
     "gemini-1.5-pro-latest": {"input": 3.50, "output": 10.50},
     "gemini-1.5-pro": {"input": 3.50, "output": 10.50},
     "gemini-1.5-flash": {"input": 0.35, "output": 1.05},
@@ -24,9 +29,9 @@ class GeminiProvider(BaseLLMProvider):
 
         Args:
             api_key: Google API key
-            model: Model to use (default: gemini-1.5-pro-latest)
+            model: Model to use (default: models/gemini-2.5-flash)
         """
-        super().__init__(api_key, model or "gemini-1.5-pro-latest")
+        super().__init__(api_key, model or "models/gemini-2.5-flash")
         genai.configure(api_key=self.api_key)
 
     async def generate(
@@ -107,7 +112,7 @@ class GeminiProvider(BaseLLMProvider):
         Returns:
             Cost in USD
         """
-        pricing = GEMINI_PRICING.get(model, GEMINI_PRICING["gemini-1.5-pro-latest"])
+        pricing = GEMINI_PRICING.get(model, GEMINI_PRICING["models/gemini-2.5-flash"])
 
         input_cost = (input_tokens / 1_000_000) * pricing["input"]
         output_cost = (output_tokens / 1_000_000) * pricing["output"]

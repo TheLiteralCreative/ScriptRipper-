@@ -78,7 +78,7 @@ async def seed_profiles(session: AsyncSession) -> dict:
         },
         status=ProfileStatus.PUBLISHED,
         provider=LLMProvider.GEMINI,
-        model="gemini-1.5-pro-latest",
+        model="models/gemini-2.5-flash",
     )
     session.add(meetings_profile)
 
@@ -108,7 +108,7 @@ async def seed_profiles(session: AsyncSession) -> dict:
         },
         status=ProfileStatus.PUBLISHED,
         provider=LLMProvider.GEMINI,
-        model="gemini-1.5-pro-latest",
+        model="models/gemini-2.5-flash",
     )
     session.add(presentations_profile)
 
