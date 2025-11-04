@@ -19,7 +19,7 @@ async def seed_users(session: AsyncSession) -> dict:
     # Admin user
     admin = User(
         id=uuid.uuid4(),
-        email="admin@scriptripper.local",
+        email="admin@scriptripper.dev",
         name="Admin User",
         hashed_password=get_password_hash("admin123"),
         role=UserRole.ADMIN,
@@ -30,7 +30,7 @@ async def seed_users(session: AsyncSession) -> dict:
     # Regular user
     user = User(
         id=uuid.uuid4(),
-        email="user@scriptripper.local",
+        email="user@scriptripper.dev",
         name="Test User",
         hashed_password=get_password_hash("user123"),
         role=UserRole.USER,
@@ -144,8 +144,8 @@ async def main():
             print("✓ Seeding completed successfully!")
             print("=" * 60)
             print("\nTest Credentials:")
-            print("  Admin: admin@scriptripper.local / admin123")
-            print("  User:  user@scriptripper.local / user123")
+            print("  Admin: admin@scriptripper.dev / admin123")
+            print("  User:  user@scriptripper.dev / user123")
             print("\nProfiles Created:")
             print(f"  - {profiles['meetings'].name}")
             print(f"  - {profiles['presentations'].name}")

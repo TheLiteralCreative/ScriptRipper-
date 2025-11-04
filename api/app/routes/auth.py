@@ -1,9 +1,35 @@
 """Authentication endpoints."""
 
+import secrets
+import uuid
+from typing import Optional
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
+from google_auth_oauthlib.flow import Flow
 from pydantic import BaseModel, EmailStr
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config.database import get_db
+from app.config.settings import get_settings
+from app.models.user import User, UserRole
+from app.schemas.auth import AuthResponse, TokenResponse, UserResponse
+from app.utils.auth import create_access_token, create_refresh_token, verify_password
 
 router = APIRouter()
+settings = get_settings()
+
+# Store state tokens temporarily (in production, use Redis)
+_oauth_states = {}
+
+
+class LoginRequest(BaseModel):
+    """Login request schema."""
+
+    email: EmailStr
+    password: str
 
 
 class MagicLinkRequest(BaseModel):
@@ -18,7 +44,67 @@ class MagicLinkResponse(BaseModel):
     message: str
 
 
-@router.post("/login", response_model=MagicLinkResponse)
+@router.post("/login", response_model=AuthResponse)
+async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Login with email and password.
+
+    Args:
+        request: Login request with email and password
+        db: Database session
+
+    Returns:
+        JWT tokens and user info
+    """
+    # Find user by email
+    result = await db.execute(select(User).where(User.email == request.email))
+    user = result.scalar_one_or_none()
+
+    # Verify user exists and password is correct
+    if not user or not user.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+
+    if not verify_password(request.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+
+    # Generate JWT tokens
+    token_data = {"sub": str(user.id), "email": user.email}
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
+    # Calculate token expiration in seconds
+    expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
+    return AuthResponse(
+        tokens=TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=expires_in,
+        ),
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            name=user.name,
+            role=user.role.value,
+            is_active=user.is_active,
+        ),
+    )
+
+
+@router.post("/magic-link", response_model=MagicLinkResponse)
 async def request_magic_link(request: MagicLinkRequest):
     """
     Request magic link for passwordless login.
@@ -69,38 +155,167 @@ async def google_oauth_redirect():
     Returns:
         Redirect to Google OAuth
     """
-    # TODO: Implement Google OAuth redirect
-    # 1. Generate OAuth state token
-    # 2. Build Google OAuth URL
-    # 3. Redirect to Google
+    # Generate state token for CSRF protection
+    state = secrets.token_urlsafe(32)
+    _oauth_states[state] = True
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Google OAuth not yet implemented",
+    # Configure OAuth flow
+    flow = Flow.from_client_config(
+        client_config={
+            "web": {
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=[
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+        ],
+        redirect_uri=settings.GOOGLE_REDIRECT_URI,
     )
 
+    # Generate authorization URL
+    authorization_url, _ = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        state=state,
+    )
 
-@router.get("/oauth/google/callback")
-async def google_oauth_callback(code: str, state: str):
+    return RedirectResponse(url=authorization_url)
+
+
+@router.get("/oauth/google/callback", response_model=AuthResponse)
+async def google_oauth_callback(
+    code: str, state: str, db: AsyncSession = Depends(get_db)
+):
     """
     Handle Google OAuth callback.
 
     Args:
         code: Authorization code from Google
         state: State token for CSRF protection
+        db: Database session
 
     Returns:
         JWT tokens and user info
     """
-    # TODO: Implement Google OAuth callback
-    # 1. Verify state token
-    # 2. Exchange code for Google tokens
-    # 3. Get user info from Google
-    # 4. Create or update user in database
-    # 5. Generate JWT tokens
-    # 6. Return tokens and user info
+    # Verify state token
+    if state not in _oauth_states:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid state token",
+        )
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Google OAuth callback not yet implemented",
+    # Remove used state token
+    del _oauth_states[state]
+
+    # Exchange authorization code for tokens
+    flow = Flow.from_client_config(
+        client_config={
+            "web": {
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=[
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/userinfo.profile",
+        ],
+        redirect_uri=settings.GOOGLE_REDIRECT_URI,
+    )
+
+    try:
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to exchange authorization code: {str(e)}",
+        )
+
+    # Get user info from Google
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {credentials.token}"},
+        )
+
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to fetch user info from Google",
+            )
+
+        user_info = response.json()
+
+    # Extract user data
+    email = user_info.get("email")
+    name = user_info.get("name")
+    google_id = user_info.get("id")
+
+    if not email or not google_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or Google ID not provided by Google",
+        )
+
+    # Check if user exists
+    result = await db.execute(
+        select(User).where(
+            (User.email == email) | (User.oauth_provider_id == google_id)
+        )
+    )
+    user = result.scalar_one_or_none()
+
+    if user:
+        # Update existing user
+        user.oauth_provider = "google"
+        user.oauth_provider_id = google_id
+        if not user.name and name:
+            user.name = name
+        user.is_active = True
+    else:
+        # Create new user
+        user = User(
+            id=uuid.uuid4(),
+            email=email,
+            name=name,
+            oauth_provider="google",
+            oauth_provider_id=google_id,
+            role=UserRole.USER,
+            is_active=True,
+        )
+        db.add(user)
+
+    await db.commit()
+    await db.refresh(user)
+
+    # Generate JWT tokens
+    token_data = {"sub": str(user.id), "email": user.email}
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
+    # Calculate token expiration in seconds
+    expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
+    return AuthResponse(
+        tokens=TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=expires_in,
+        ),
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            name=user.name,
+            role=user.role.value,
+            is_active=user.is_active,
+        ),
     )
