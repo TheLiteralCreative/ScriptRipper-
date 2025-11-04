@@ -40,7 +40,7 @@ class Artifact(Base, TimestampMixin):
 
     # Artifact details
     kind: Mapped[ArtifactKind] = mapped_column(
-        SQLEnum(ArtifactKind, name="artifact_kind", create_type=True),
+        SQLEnum(ArtifactKind, name="artifact_kind", create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
     )
     uri: Mapped[str] = mapped_column(Text, nullable=False)

@@ -51,14 +51,13 @@ class Settings(BaseSettings):
     MAGIC_LINK_EXPIRE_MINUTES: int = Field(default=15)
 
     # CORS
-    CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000"])
+    CORS_ORIGINS: str = Field(default="http://localhost:3000")
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+    def get_cors_origins_list(self) -> List[str]:
+        """Parse CORS origins from comma-separated string."""
+        if isinstance(self.CORS_ORIGINS, str):
+            return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        return self.CORS_ORIGINS if isinstance(self.CORS_ORIGINS, list) else [self.CORS_ORIGINS]
 
     # n8n
     N8N_WEBHOOK_URL: Optional[str] = Field(default=None)
@@ -75,14 +74,13 @@ class Settings(BaseSettings):
 
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = Field(default=50)
-    ALLOWED_EXTENSIONS: List[str] = Field(default=["json", "txt", "srt", "vtt"])
+    ALLOWED_EXTENSIONS: str = Field(default="json,txt,srt,vtt")
 
-    @field_validator("ALLOWED_EXTENSIONS", mode="before")
-    @classmethod
-    def parse_allowed_extensions(cls, v):
-        if isinstance(v, str):
-            return [ext.strip() for ext in v.split(",")]
-        return v
+    def get_allowed_extensions_list(self) -> List[str]:
+        """Parse allowed extensions from comma-separated string."""
+        if isinstance(self.ALLOWED_EXTENSIONS, str):
+            return [ext.strip() for ext in self.ALLOWED_EXTENSIONS.split(",")]
+        return self.ALLOWED_EXTENSIONS if isinstance(self.ALLOWED_EXTENSIONS, list) else [self.ALLOWED_EXTENSIONS]
 
     # Security
     ENCRYPTION_KEY: Optional[str] = Field(default=None)

@@ -40,7 +40,6 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     )
-    op.create_index('ix_users_email', 'users', ['email'])
 
     # Create profiles table
     op.create_table(
@@ -58,7 +57,6 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     )
-    op.create_index('ix_profiles_key', 'profiles', ['key'])
 
     # Create jobs table
     op.create_table(
@@ -80,10 +78,6 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['profile_id'], ['profiles.id'], ondelete='RESTRICT'),
     )
-    op.create_index('ix_jobs_user_id', 'jobs', ['user_id'])
-    op.create_index('ix_jobs_profile_id', 'jobs', ['profile_id'])
-    op.create_index('ix_jobs_status', 'jobs', ['status'])
-    op.create_index('ix_jobs_idempotency_key', 'jobs', ['idempotency_key'])
 
     # Create artifacts table
     op.create_table(
@@ -98,7 +92,6 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.ForeignKeyConstraint(['job_id'], ['jobs.id'], ondelete='CASCADE'),
     )
-    op.create_index('ix_artifacts_job_id', 'artifacts', ['job_id'])
 
     # Create custom_prompts table
     op.create_table(
@@ -112,7 +105,6 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['job_id'], ['jobs.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['result_artifact_id'], ['artifacts.id'], ondelete='SET NULL'),
     )
-    op.create_index('ix_custom_prompts_job_id', 'custom_prompts', ['job_id'])
 
 
 def downgrade() -> None:

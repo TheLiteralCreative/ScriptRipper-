@@ -39,7 +39,7 @@ class User(Base, TimestampMixin):
         nullable=True,  # Nullable for OAuth users
     )
     role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, name="user_role", create_type=True),
+        SQLEnum(UserRole, name="user_role", create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=UserRole.USER,
     )

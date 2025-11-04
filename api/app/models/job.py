@@ -3,7 +3,8 @@
 import uuid
 from typing import Optional, Dict, Any
 from decimal import Decimal
-from sqlalchemy import String, Text, Numeric, Enum as SQLEnum, JSON, ForeignKey
+from datetime import datetime
+from sqlalchemy import String, Text, Numeric, Enum as SQLEnum, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 import enum
@@ -47,7 +48,7 @@ class Job(Base, TimestampMixin):
 
     # Job details
     status: Mapped[JobStatus] = mapped_column(
-        SQLEnum(JobStatus, name="job_status", create_type=True),
+        SQLEnum(JobStatus, name="job_status", create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=JobStatus.QUEUED,
         index=True,
@@ -73,7 +74,8 @@ class Job(Base, TimestampMixin):
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Completion tracking
-    completed_at: Mapped[Optional[Any]] = mapped_column(
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
 

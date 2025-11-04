@@ -12,9 +12,12 @@ from app.config.settings import get_settings
 
 settings = get_settings()
 
+# Convert DATABASE_URL to use asyncpg driver for async operations
+db_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+
 # Create async engine
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=settings.is_development,
     poolclass=NullPool if settings.ENVIRONMENT == "test" else None,
     pool_pre_ping=True,

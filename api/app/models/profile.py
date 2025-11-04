@@ -58,12 +58,12 @@ class Profile(Base, TimestampMixin):
     )
 
     status: Mapped[ProfileStatus] = mapped_column(
-        SQLEnum(ProfileStatus, name="profile_status", create_type=True),
+        SQLEnum(ProfileStatus, name="profile_status", create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=ProfileStatus.DRAFT,
     )
     provider: Mapped[LLMProvider] = mapped_column(
-        SQLEnum(LLMProvider, name="llm_provider", create_type=True),
+        SQLEnum(LLMProvider, name="llm_provider", create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=LLMProvider.GEMINI,
     )
