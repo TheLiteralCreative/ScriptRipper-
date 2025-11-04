@@ -22,6 +22,9 @@ bcrypt==4.1.2
 google-auth==2.27.0
 google-auth-oauthlib==1.2.0
 
+# LLM Providers
+google-generativeai==0.3.2
+
 # Email
 sendgrid==6.11.0
 
