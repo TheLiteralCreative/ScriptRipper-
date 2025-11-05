@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -70,11 +69,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md">
         {/* Header */}
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
-        >
+        <div className="mb-8 text-center animate-in">
           <div className="mb-4 flex items-center justify-center">
             <Sparkles className="h-10 w-10 text-gray-900" />
           </div>
@@ -82,13 +77,10 @@ export default function LoginPage() {
             ScriptRipper
           </h1>
           <p className="text-base font-light text-gray-600">Sign in to your account</p>
-        </motion.div>
+        </div>
 
         {/* Login Card */}
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
+        <div className="animate-slide-up">
           <Card className="border-gray-200 shadow-sm">
             <CardHeader className="space-y-1 pb-6">
               <CardTitle className="text-2xl font-semibold tracking-tight">Login</CardTitle>
@@ -144,16 +136,14 @@ export default function LoginPage() {
                 )}
 
                 {/* Submit Button */}
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
-                    size="lg"
-                  >
-                    {isLoading ? 'Signing in...' : 'Sign In →'}
-                  </Button>
-                </motion.div>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 transition-all"
+                  size="lg"
+                >
+                  {isLoading ? 'Signing in...' : 'Sign In →'}
+                </Button>
               </form>
 
               {/* Divider */}
@@ -170,32 +160,28 @@ export default function LoginPage() {
 
               {/* Quick Login Buttons */}
               <div className="grid gap-3">
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleQuickLogin('admin')}
-                    disabled={isLoading}
-                    className="w-full border-gray-300"
-                  >
-                    Login as Admin
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleQuickLogin('user')}
-                    disabled={isLoading}
-                    className="w-full border-gray-300"
-                  >
-                    Login as User
-                  </Button>
-                </motion.div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleQuickLogin('admin')}
+                  disabled={isLoading}
+                  className="w-full border-gray-300 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  Login as Admin
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleQuickLogin('user')}
+                  disabled={isLoading}
+                  className="w-full border-gray-300 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  Login as User
+                </Button>
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
         {/* Footer */}
         <p className="mt-8 text-center text-sm text-gray-400">
