@@ -72,6 +72,9 @@ mypy==1.8.0
 # Security
 cryptography==42.0.2
 
+# Payment Processing
+stripe==11.1.0
+
 # CORS
 fastapi-cors==0.0.6
 

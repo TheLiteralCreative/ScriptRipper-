@@ -14,20 +14,35 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await authApi.login(email, password);
+      const response = await authApi.register(email, password, name || undefined);
 
       // Store tokens
       localStorage.setItem('access_token', response.tokens.access_token);
@@ -37,26 +52,10 @@ export default function LoginPage() {
       // Redirect to home
       router.push('/');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.');
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = async (role: 'admin' | 'user') => {
-    const credentials = {
-      admin: { email: 'admin@scriptripper.dev', password: 'admin123' },
-      user: { email: 'user@scriptripper.dev', password: 'user123' },
-    };
-
-    setEmail(credentials[role].email);
-    setPassword(credentials[role].password);
-
-    // Trigger login
-    setTimeout(() => {
-      const form = document.querySelector('form') as HTMLFormElement;
-      form.requestSubmit();
-    }, 100);
   };
 
   return (
@@ -77,20 +76,38 @@ export default function LoginPage() {
           <h1 className="mb-2 text-5xl font-bold tracking-tight text-gray-900">
             ScriptRipper
           </h1>
-          <p className="text-base font-light text-gray-600">Sign in to your account</p>
+          <p className="text-base font-light text-gray-600">Create your account</p>
         </div>
 
-        {/* Login Card */}
+        {/* Register Card */}
         <div className="animate-slide-up">
           <Card className="border-gray-200 shadow-sm">
             <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-2xl font-semibold tracking-tight">Login</CardTitle>
+              <CardTitle className="text-2xl font-semibold tracking-tight">Sign Up</CardTitle>
               <CardDescription className="text-base">
-                Enter your credentials to access ScriptRipper
+                Enter your details to create a new account
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleLogin} className="space-y-5">
+              <form onSubmit={handleRegister} className="space-y-5">
+                {/* Name */}
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="mb-2 block text-sm font-medium text-gray-900"
+                  >
+                    Name (optional)
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                    placeholder="John Doe"
+                  />
+                </div>
+
                 {/* Email */}
                 <div>
                   <label
@@ -106,31 +123,45 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                    placeholder="admin@scriptripper.dev"
+                    placeholder="you@example.com"
                   />
                 </div>
 
                 {/* Password */}
                 <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label
-                      htmlFor="password"
-                      className="text-sm font-medium text-gray-900"
-                    >
-                      Password
-                    </label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs text-gray-600 hover:text-gray-900 hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-medium text-gray-900"
+                  >
+                    Password
+                  </label>
                   <input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                    placeholder="••••••••"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Must be at least 8 characters
+                  </p>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="mb-2 block text-sm font-medium text-gray-900"
+                  >
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                     placeholder="••••••••"
@@ -151,53 +182,19 @@ export default function LoginPage() {
                   className="w-full bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 transition-all"
                   size="lg"
                 >
-                  {isLoading ? 'Signing in...' : 'Sign In →'}
+                  {isLoading ? 'Creating account...' : 'Create Account →'}
                 </Button>
               </form>
 
-              {/* Divider */}
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-4 text-gray-400 font-medium">
-                    Quick Login (Dev)
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Login Buttons */}
-              <div className="grid gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleQuickLogin('admin')}
-                  disabled={isLoading}
-                  className="w-full border-gray-300 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                >
-                  Login as Admin
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleQuickLogin('user')}
-                  disabled={isLoading}
-                  className="w-full border-gray-300 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                >
-                  Login as User
-                </Button>
-              </div>
-
-              {/* Register Link */}
+              {/* Login Link */}
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  Don't have an account?{' '}
+                  Already have an account?{' '}
                   <Link
-                    href="/register"
+                    href="/login"
                     className="font-medium text-gray-900 hover:underline"
                   >
-                    Sign up
+                    Sign in
                   </Link>
                 </p>
               </div>
@@ -207,7 +204,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="mt-8 text-center text-sm text-gray-400">
-          Demo credentials are pre-filled for testing
+          Free tier: 1 rip per day • Pro: $5/month unlimited
         </p>
       </div>
     </div>

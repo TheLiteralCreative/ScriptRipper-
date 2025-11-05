@@ -85,6 +85,14 @@ class Settings(BaseSettings):
     # Security
     ENCRYPTION_KEY: Optional[str] = Field(default=None)
 
+    # Stripe
+    STRIPE_SECRET_KEY: Optional[str] = Field(default=None)
+    STRIPE_PUBLISHABLE_KEY: Optional[str] = Field(default=None)
+    STRIPE_WEBHOOK_SECRET: Optional[str] = Field(default=None)
+    STRIPE_PRO_PRICE_ID: Optional[str] = Field(default=None)
+    STRIPE_SUCCESS_URL: str = Field(default="http://localhost:3000/subscription/success")
+    STRIPE_CANCEL_URL: str = Field(default="http://localhost:3000/subscription/cancel")
+
     @property
     def is_development(self) -> bool:
         """Check if running in development mode."""

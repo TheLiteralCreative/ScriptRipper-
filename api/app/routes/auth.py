@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.database import get_db
 from app.config.settings import get_settings
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, SubscriptionTier
 from app.schemas.auth import AuthResponse, TokenResponse, UserResponse
-from app.utils.auth import create_access_token, create_refresh_token, verify_password
+from app.utils.auth import create_access_token, create_refresh_token, verify_password, get_password_hash
 
 router = APIRouter()
 settings = get_settings()
@@ -32,6 +32,14 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    """Registration request schema."""
+
+    email: EmailStr
+    password: str
+    name: Optional[str] = None
+
+
 class MagicLinkRequest(BaseModel):
     """Magic link request schema."""
 
@@ -42,6 +50,19 @@ class MagicLinkResponse(BaseModel):
     """Magic link response schema."""
 
     message: str
+
+
+class PasswordResetRequest(BaseModel):
+    """Password reset request schema."""
+
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Password reset confirmation schema."""
+
+    token: str
+    new_password: str
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -102,6 +123,158 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
             is_active=user.is_active,
         ),
     )
+
+
+@router.post("/register", response_model=AuthResponse)
+async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Register a new user with email and password.
+
+    Args:
+        request: Registration request with email, password, and optional name
+        db: Database session
+
+    Returns:
+        JWT tokens and user info
+    """
+    # Check if user already exists
+    result = await db.execute(select(User).where(User.email == request.email))
+    existing_user = result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists",
+        )
+
+    # Validate password strength
+    if len(request.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long",
+        )
+
+    # Create new user
+    user = User(
+        id=uuid.uuid4(),
+        email=request.email,
+        name=request.name,
+        hashed_password=get_password_hash(request.password),
+        role=UserRole.USER,
+        subscription_tier=SubscriptionTier.FREE,
+        is_active=True,
+    )
+
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    # Generate JWT tokens
+    token_data = {"sub": str(user.id), "email": user.email}
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
+    # Calculate token expiration in seconds
+    expires_in = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
+    return AuthResponse(
+        tokens=TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=expires_in,
+        ),
+        user=UserResponse(
+            id=str(user.id),
+            email=user.email,
+            name=user.name,
+            role=user.role.value,
+            is_active=user.is_active,
+        ),
+    )
+
+
+@router.post("/password-reset/request", response_model=MagicLinkResponse)
+async def request_password_reset(
+    request: PasswordResetRequest, db: AsyncSession = Depends(get_db)
+):
+    """
+    Request password reset link.
+
+    Args:
+        request: Password reset request with email
+        db: Database session
+
+    Returns:
+        Success message
+    """
+    # Check if user exists
+    result = await db.execute(select(User).where(User.email == request.email))
+    user = result.scalar_one_or_none()
+
+    # Always return success to prevent email enumeration
+    # In production, send email with reset link here
+    if user and user.is_active:
+        # Generate password reset token
+        from app.utils.auth import create_magic_link_token
+
+        reset_token = create_magic_link_token(user.email)
+
+        # TODO: Send email with reset link
+        # For development, log the token
+        print(f"Password reset token for {user.email}: {reset_token}")
+        print(f"Reset link: http://localhost:3000/reset-password?token={reset_token}")
+
+    return {"message": "If an account exists with that email, a password reset link has been sent."}
+
+
+@router.post("/password-reset/confirm", response_model=MagicLinkResponse)
+async def confirm_password_reset(
+    request: PasswordResetConfirm, db: AsyncSession = Depends(get_db)
+):
+    """
+    Confirm password reset with token and new password.
+
+    Args:
+        request: Password reset confirmation with token and new password
+        db: Database session
+
+    Returns:
+        Success message
+    """
+    # Verify token
+    from app.utils.auth import verify_magic_link_token
+
+    email = verify_magic_link_token(request.token)
+
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    # Validate password strength
+    if len(request.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long",
+        )
+
+    # Find user
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Update password
+    user.hashed_password = get_password_hash(request.new_password)
+    await db.commit()
+
+    return {"message": "Password has been reset successfully"}
 
 
 @router.post("/magic-link", response_model=MagicLinkResponse)

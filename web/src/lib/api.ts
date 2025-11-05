@@ -25,6 +25,24 @@ export const authApi = {
     return response.data;
   },
 
+  register: async (email: string, password: string, name?: string) => {
+    const response = await api.post('/auth/register', { email, password, name });
+    return response.data;
+  },
+
+  requestPasswordReset: async (email: string) => {
+    const response = await api.post('/auth/password-reset/request', { email });
+    return response.data;
+  },
+
+  confirmPasswordReset: async (token: string, new_password: string) => {
+    const response = await api.post('/auth/password-reset/confirm', {
+      token,
+      new_password,
+    });
+    return response.data;
+  },
+
   googleOAuth: () => {
     window.location.href = `${API_URL}/api/v1/auth/oauth/google`;
   },
