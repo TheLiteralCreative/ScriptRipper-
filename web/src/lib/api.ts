@@ -147,3 +147,21 @@ export const adminApi = {
     return response.data;
   },
 };
+
+// Billing API
+export const billingApi = {
+  createCheckoutSession: async () => {
+    const response = await api.post('/billing/create-checkout-session');
+    return response.data;
+  },
+
+  getSubscriptionStatus: async () => {
+    const response = await api.get('/billing/subscription-status');
+    return response.data;
+  },
+
+  cancelSubscription: async () => {
+    const response = await api.post('/billing/cancel-subscription');
+    return response.data;
+  },
+};

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Download, FileText, Home, CheckCircle2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import JSZip from 'jszip';
@@ -252,11 +253,13 @@ export default function DownloadPage() {
                 <p className="mb-6 text-sm text-gray-600">
                   Free users get 1 rip per day. Upgrade to Pro for unlimited access!
                 </p>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    Upgrade to Pro - $5/month
-                  </Button>
-                </motion.div>
+                <Link href="/upgrade">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                      Upgrade to Pro - $5/month →
+                    </Button>
+                  </motion.div>
+                </Link>
               </div>
             </CardContent>
           </Card>
