@@ -4,7 +4,7 @@
 1. [Prerequisites](#prerequisites)
 2. [Environment Setup](#environment-setup)
 3. [Stripe Configuration](#stripe-configuration)
-4. [SendGrid Setup](#sendgrid-setup)
+4. [Purelymail Setup](#purelymail-setup)
 5. [Database Migrations](#database-migrations)
 6. [Local Development](#local-development)
 7. [Production Deployment](#production-deployment)
@@ -23,7 +23,7 @@
 
 - **Third-party Services:**
   - Stripe account (for payments)
-  - SendGrid account (for emails)
+  - Purelymail account (for emails)
   - Google Cloud account (for Gemini API)
 
 ## Environment Setup
@@ -63,8 +63,12 @@ STRIPE_PRO_PRICE_ID=price_...  # Created in Stripe Dashboard
 STRIPE_SUCCESS_URL=http://localhost:3000/subscription/success  # Change for production
 STRIPE_CANCEL_URL=http://localhost:3000/subscription/cancel  # Change for production
 
-# SendGrid Email
-SENDGRID_API_KEY=SG....
+# Purelymail Email
+PURELYMAIL_API_TOKEN=pm-live-...  # From Purelymail Settings → API
+PURELYMAIL_SMTP_HOST=smtp.purelymail.com
+PURELYMAIL_SMTP_PORT=587
+PURELYMAIL_SMTP_USER=noreply@scriptripper.dev
+PURELYMAIL_SMTP_PASS=your-smtp-password-here  # Set password in Purelymail for this user
 FROM_EMAIL=noreply@scriptripper.dev
 MAGIC_LINK_EXPIRE_MINUTES=15
 
@@ -134,40 +138,50 @@ For production:
 3. Any 3-digit CVC
 4. Any ZIP code
 
-## SendGrid Setup
+## Purelymail Setup
 
-### 1. Create SendGrid Account
-1. Sign up at [sendgrid.com](https://sendgrid.com)
-2. Verify your email address
-
-### 2. Create API Key
-1. Go to **Settings** → **API Keys**
-2. Click **Create API Key**
-3. Name: "ScriptRipper"
-4. Permission: **Full Access** (or restricted send only)
-5. Copy the key to your `.env` as `SENDGRID_API_KEY`
-
-### 3. Verify Sender Identity
-For development:
-1. Go to **Settings** → **Sender Authentication**
-2. **Single Sender Verification**
-3. Add your email address (e.g., `dev@yourdomain.com`)
-4. Verify the email
-
-For production:
-1. **Domain Authentication** (recommended)
+### 1. Create Purelymail Account
+1. Sign up at [purelymail.com](https://purelymail.com)
 2. Add your domain (e.g., `scriptripper.dev`)
-3. Add DNS records as instructed
-4. Wait for verification
+3. Configure DNS records as instructed (MX, SPF, DKIM)
+4. Wait for DNS propagation (~24 hours max)
 
-### 4. Update FROM_EMAIL
-Set `FROM_EMAIL` in `.env` to match your verified sender:
+### 2. Get API Token
+1. Log in to Purelymail dashboard
+2. Go to **Settings** → **API**
+3. Click **Refresh API Key**
+4. Copy the token (starts with `pm-live-...`)
+5. Add to `.env` as `PURELYMAIL_API_TOKEN`
+
+### 3. Create Email User for Sending
+1. In Purelymail, go to **Users**
+2. Click **Add User**
+3. Username: `noreply`
+4. Domain: `scriptripper.dev`
+5. Set a strong password for SMTP authentication
+6. Add to `.env` as `PURELYMAIL_SMTP_USER=noreply@scriptripper.dev` and `PURELYMAIL_SMTP_PASS=your-password`
+
+### 4. Configure SMTP Settings
+Add these to your `.env`:
 ```bash
+PURELYMAIL_SMTP_HOST=smtp.purelymail.com
+PURELYMAIL_SMTP_PORT=587
+PURELYMAIL_SMTP_USER=noreply@scriptripper.dev
+PURELYMAIL_SMTP_PASS=your-smtp-password
 FROM_EMAIL=noreply@scriptripper.dev
 ```
 
-### 5. Test Email Sending
-Register a new user or request password reset to test email delivery.
+### 5. Verify DNS Configuration
+1. Check MX records: `dig scriptripper.dev MX`
+2. Check SPF record: `dig scriptripper.dev TXT`
+3. Ensure DKIM is configured properly
+4. Test with [mail-tester.com](https://www.mail-tester.com)
+
+### 6. Test Email Sending
+Register a new user or request password reset to test email delivery. Check Purelymail dashboard for sent email logs.
+
+### Cost
+- Purelymail: **$10/year** for unlimited emails (much cheaper than SendGrid)
 
 ## Database Migrations
 
@@ -307,7 +321,7 @@ netlify deploy --prod --dir=.next
 - Database performance
 - API response times
 - Stripe webhook delivery
-- SendGrid email delivery rates
+- Purelymail email delivery (check Activity dashboard)
 
 ### 5. Security Checklist
 - [ ] All environment variables are secret (not committed to git)
@@ -322,10 +336,12 @@ netlify deploy --prod --dir=.next
 ## Troubleshooting
 
 ### Emails Not Sending
-- Verify `SENDGRID_API_KEY` is correct
-- Check sender email is verified in SendGrid
-- Review SendGrid activity dashboard for bounces/blocks
-- Check server logs for email errors
+- Verify `PURELYMAIL_SMTP_USER` and `PURELYMAIL_SMTP_PASS` are correct
+- Check DNS records are properly configured (MX, SPF, DKIM)
+- Review Purelymail dashboard → Activity for delivery status
+- Test SMTP connection: `telnet smtp.purelymail.com 587`
+- Check server logs for SMTP authentication errors
+- Verify the email user exists in Purelymail dashboard
 
 ### Stripe Webhook Failures
 - Verify `STRIPE_WEBHOOK_SECRET` matches webhook endpoint

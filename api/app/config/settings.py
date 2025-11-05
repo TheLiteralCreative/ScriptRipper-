@@ -45,10 +45,17 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: Optional[str] = Field(default=None)
     GOOGLE_REDIRECT_URI: Optional[str] = Field(default=None)
 
-    # Email (Magic Link)
-    SENDGRID_API_KEY: Optional[str] = Field(default=None)
-    FROM_EMAIL: str = Field(default="noreply@scriptripper.example.com")
+    # Email (Purelymail)
+    PURELYMAIL_API_TOKEN: Optional[str] = Field(default=None)
+    PURELYMAIL_SMTP_HOST: str = Field(default="smtp.purelymail.com")
+    PURELYMAIL_SMTP_PORT: int = Field(default=587)
+    PURELYMAIL_SMTP_USER: Optional[str] = Field(default=None)
+    PURELYMAIL_SMTP_PASS: Optional[str] = Field(default=None)
+    FROM_EMAIL: str = Field(default="noreply@scriptripper.dev")
     MAGIC_LINK_EXPIRE_MINUTES: int = Field(default=15)
+
+    # Email (Legacy - SendGrid)
+    SENDGRID_API_KEY: Optional[str] = Field(default=None)
 
     # CORS
     CORS_ORIGINS: str = Field(default="http://localhost:3000")

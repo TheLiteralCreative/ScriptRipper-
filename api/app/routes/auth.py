@@ -17,7 +17,7 @@ from app.config.settings import get_settings
 from app.models.user import User, UserRole, SubscriptionTier
 from app.schemas.auth import AuthResponse, TokenResponse, UserResponse
 from app.utils.auth import create_access_token, create_refresh_token, verify_password, get_password_hash
-from app.utils.email import send_password_reset_email, send_welcome_email
+from app.utils.email_purelymail import send_password_reset_email, send_welcome_email
 
 router = APIRouter()
 settings = get_settings()
