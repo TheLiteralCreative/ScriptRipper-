@@ -17,6 +17,7 @@ from app.config.settings import get_settings
 from app.models.user import User, UserRole, SubscriptionTier
 from app.schemas.auth import AuthResponse, TokenResponse, UserResponse
 from app.utils.auth import create_access_token, create_refresh_token, verify_password, get_password_hash
+from app.utils.email import send_password_reset_email, send_welcome_email
 
 router = APIRouter()
 settings = get_settings()
@@ -169,6 +170,13 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
     await db.commit()
     await db.refresh(user)
 
+    # Send welcome email (non-blocking)
+    try:
+        await send_welcome_email(user.email, user.name)
+    except Exception as e:
+        # Don't fail registration if email fails
+        print(f"Failed to send welcome email: {e}")
+
     # Generate JWT tokens
     token_data = {"sub": str(user.id), "email": user.email}
     access_token = create_access_token(token_data)
@@ -213,17 +221,21 @@ async def request_password_reset(
     user = result.scalar_one_or_none()
 
     # Always return success to prevent email enumeration
-    # In production, send email with reset link here
     if user and user.is_active:
         # Generate password reset token
         from app.utils.auth import create_magic_link_token
 
         reset_token = create_magic_link_token(user.email)
 
-        # TODO: Send email with reset link
-        # For development, log the token
-        print(f"Password reset token for {user.email}: {reset_token}")
-        print(f"Reset link: http://localhost:3000/reset-password?token={reset_token}")
+        # Send password reset email
+        try:
+            await send_password_reset_email(user.email, reset_token)
+        except Exception as e:
+            # Log error but don't reveal to user
+            print(f"Failed to send password reset email to {user.email}: {e}")
+            # For development, also log the token
+            print(f"Password reset token: {reset_token}")
+            print(f"Reset link: http://localhost:3000/reset-password?token={reset_token}")
 
     return {"message": "If an account exists with that email, a password reset link has been sent."}
 
