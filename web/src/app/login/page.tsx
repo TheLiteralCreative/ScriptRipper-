@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,118 +60,145 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-white p-4">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="h-[800px] w-[800px] rounded-full bg-gradient-to-br from-gray-100 via-gray-50 to-transparent blur-3xl opacity-60" />
+        </div>
+      </div>
+
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-gray-900">
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8 text-center"
+        >
+          <div className="mb-4 flex items-center justify-center">
+            <Sparkles className="h-10 w-10 text-gray-900" />
+          </div>
+          <h1 className="mb-2 text-5xl font-bold tracking-tight text-gray-900">
             ScriptRipper
           </h1>
-          <p className="text-gray-600">Sign in to your account</p>
-        </div>
+          <p className="text-base font-light text-gray-600">Sign in to your account</p>
+        </motion.div>
 
         {/* Login Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>
-              Enter your credentials to access ScriptRipper
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              {/* Email */}
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="admin@scriptripper.dev"
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-                  {error}
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <Card className="border-gray-200 shadow-sm">
+            <CardHeader className="space-y-1 pb-6">
+              <CardTitle className="text-2xl font-semibold tracking-tight">Login</CardTitle>
+              <CardDescription className="text-base">
+                Enter your credentials to access ScriptRipper
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-5">
+                {/* Email */}
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-medium text-gray-900"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                    placeholder="admin@scriptripper.dev"
+                  />
                 </div>
-              )}
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full"
-                size="lg"
-              >
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </form>
+                {/* Password */}
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-medium text-gray-900"
+                  >
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                    placeholder="••••••••"
+                  />
+                </div>
 
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                {/* Error Message */}
+                {error && (
+                  <div className="rounded-xl bg-red-50 p-4 text-sm text-red-800">
+                    {error}
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
+                    size="lg"
+                  >
+                    {isLoading ? 'Signing in...' : 'Sign In →'}
+                  </Button>
+                </motion.div>
+              </form>
+
+              {/* Divider */}
+              <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-4 text-gray-400 font-medium">
+                    Quick Login (Dev)
+                  </span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-2 text-gray-500">
-                  Quick Login (Dev)
-                </span>
-              </div>
-            </div>
 
-            {/* Quick Login Buttons */}
-            <div className="grid gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleQuickLogin('admin')}
-                disabled={isLoading}
-              >
-                Login as Admin
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleQuickLogin('user')}
-                disabled={isLoading}
-              >
-                Login as User
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Quick Login Buttons */}
+              <div className="grid gap-3">
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleQuickLogin('admin')}
+                    disabled={isLoading}
+                    className="w-full border-gray-300"
+                  >
+                    Login as Admin
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleQuickLogin('user')}
+                    disabled={isLoading}
+                    className="w-full border-gray-300"
+                  >
+                    Login as User
+                  </Button>
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-8 text-center text-sm text-gray-400">
           Demo credentials are pre-filled for testing
         </p>
       </div>

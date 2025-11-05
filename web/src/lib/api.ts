@@ -56,12 +56,76 @@ export const analysisApi = {
     });
     return response.data;
   },
+
+  analyzeBatch: async (data: {
+    transcript: string;
+    transcript_type: string;
+    tasks: Array<{ task_name: string; prompt: string }>;
+    provider?: string;
+    model?: string;
+  }) => {
+    const response = await api.post('/analyze/batch', {
+      transcript: data.transcript,
+      transcript_type: data.transcript_type,
+      tasks: data.tasks,
+      provider: data.provider || 'gemini',
+      model: data.model || 'models/gemini-2.5-flash',
+    });
+    return response.data;
+  },
 };
 
 // Profiles API
 export const profilesApi = {
   list: async () => {
     const response = await api.get('/profiles');
+    return response.data;
+  },
+};
+
+// Admin API
+export const adminApi = {
+  listUsers: async () => {
+    const response = await api.get('/admin/users');
+    return response.data;
+  },
+
+  getUserDetail: async (userId: string) => {
+    const response = await api.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  // Prompt management
+  listPrompts: async (category?: string) => {
+    const params = category ? { category } : {};
+    const response = await api.get('/admin/prompts', { params });
+    return response.data;
+  },
+
+  createPrompt: async (data: {
+    task_name: string;
+    prompt: string;
+    category: string;
+  }) => {
+    const response = await api.post('/admin/prompts', data);
+    return response.data;
+  },
+
+  updatePrompt: async (
+    promptId: string,
+    data: {
+      task_name?: string;
+      prompt?: string;
+      category?: string;
+      is_active?: boolean;
+    }
+  ) => {
+    const response = await api.patch(`/admin/prompts/${promptId}`, data);
+    return response.data;
+  },
+
+  deletePrompt: async (promptId: string) => {
+    const response = await api.delete(`/admin/prompts/${promptId}`);
     return response.data;
   },
 };

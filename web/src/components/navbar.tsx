@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/button';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Shield } from 'lucide-react';
 
 export function Navbar() {
   const router = useRouter();
@@ -58,6 +58,17 @@ export function Navbar() {
                 {user.role}
               </span>
             </div>
+            {user.role === 'admin' && (
+              <Button
+                onClick={() => router.push('/admin')}
+                variant="outline"
+                size="sm"
+                className="gap-1"
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </Button>
+            )}
             <Button
               onClick={handleLogout}
               variant="outline"

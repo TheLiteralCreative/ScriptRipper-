@@ -17,6 +17,14 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
 
 
+class SubscriptionTier(str, enum.Enum):
+    """User subscription tier enumeration."""
+
+    FREE = "free"
+    PRO = "pro"
+    PREMIUM = "premium"
+
+
 class User(Base, TimestampMixin):
     """User model for authentication and authorization."""
 
@@ -44,6 +52,11 @@ class User(Base, TimestampMixin):
         default=UserRole.USER,
     )
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    subscription_tier: Mapped[SubscriptionTier] = mapped_column(
+        SQLEnum(SubscriptionTier, name="subscription_tier", create_type=False, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=SubscriptionTier.FREE,
+    )
     oauth_provider: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
