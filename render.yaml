@@ -39,11 +39,10 @@ services:
           property: connectionString
 
       # ---- Redis Connection ----
-      # Auto-populated from the Redis service below
+      # Auto-populated from the Redis database below
       - key: REDIS_URL
-        fromService:
+        fromDatabase:
           name: scriptripper-redis
-          type: redis
           property: connectionString
 
       # ---- JWT Security ----
@@ -211,9 +210,8 @@ services:
 
       # ---- Redis Connection ----
       - key: REDIS_URL
-        fromService:
+        fromDatabase:
           name: scriptripper-redis
-          type: redis
           property: connectionString
 
       # ---- LLM Providers ----
