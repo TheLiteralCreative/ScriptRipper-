@@ -7,7 +7,7 @@ services:
   # ============================================================================
   - type: web
     name: scriptripper-api
-    runtime: docker
+    env: docker
     dockerfilePath: ./api/Dockerfile
     dockerContext: ./api
     region: oregon  # Choose: oregon, frankfurt, ohio, singapore
@@ -182,7 +182,7 @@ services:
   # ============================================================================
   - type: worker
     name: scriptripper-worker
-    runtime: docker
+    env: docker
     dockerfilePath: ./worker/Dockerfile
     dockerContext: ./worker
     region: oregon  # Should match API region
