@@ -15,9 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config.database import get_db
 from app.config.settings import get_settings
 from app.models.user import User, UserRole, SubscriptionTier
-from app.schemas.auth import AuthResponse, TokenResponse, UserResponse
+from app.schemas.auth import AuthResponse, TokenResponse, UserResponse, MagicLinkResponse
 from app.utils.auth import create_access_token, create_refresh_token, verify_password, get_password_hash
 from app.utils.email_purelymail import send_password_reset_email, send_welcome_email
+from app.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -39,18 +42,6 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     name: Optional[str] = None
-
-
-class MagicLinkRequest(BaseModel):
-    """Magic link request schema."""
-
-    email: EmailStr
-
-
-class MagicLinkResponse(BaseModel):
-    """Magic link response schema."""
-
-    message: str
 
 
 class PasswordResetRequest(BaseModel):
@@ -175,7 +166,7 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
         await send_welcome_email(user.email, user.name)
     except Exception as e:
         # Don't fail registration if email fails
-        print(f"Failed to send welcome email: {e}")
+        logger.warning(f"Failed to send welcome email to {user.email}: {e}")
 
     # Generate JWT tokens
     token_data = {"sub": str(user.id), "email": user.email}
@@ -232,10 +223,10 @@ async def request_password_reset(
             await send_password_reset_email(user.email, reset_token)
         except Exception as e:
             # Log error but don't reveal to user
-            print(f"Failed to send password reset email to {user.email}: {e}")
+            logger.warning(f"Failed to send password reset email to {user.email}: {e}")
             # For development, also log the token
-            print(f"Password reset token: {reset_token}")
-            print(f"Reset link: http://localhost:3000/reset-password?token={reset_token}")
+            logger.debug(f"Password reset token: {reset_token}")
+            logger.debug(f"Reset link: http://localhost:3000/reset-password?token={reset_token}")
 
     return {"message": "If an account exists with that email, a password reset link has been sent."}
 
@@ -287,49 +278,6 @@ async def confirm_password_reset(
     await db.commit()
 
     return {"message": "Password has been reset successfully"}
-
-
-@router.post("/magic-link", response_model=MagicLinkResponse)
-async def request_magic_link(request: MagicLinkRequest):
-    """
-    Request magic link for passwordless login.
-
-    Args:
-        request: Magic link request with email
-
-    Returns:
-        Success message
-    """
-    # TODO: Implement magic link sending
-    # 1. Create or get user by email
-    # 2. Generate magic link token
-    # 3. Send email with magic link
-    # 4. Return success message
-
-    return {"message": "Magic link sent to your email"}
-
-
-@router.post("/verify")
-async def verify_magic_link(token: str):
-    """
-    Verify magic link token and authenticate user.
-
-    Args:
-        token: Magic link token
-
-    Returns:
-        JWT tokens and user info
-    """
-    # TODO: Implement magic link verification
-    # 1. Verify token
-    # 2. Get user from token
-    # 3. Generate JWT access + refresh tokens
-    # 4. Return tokens and user info
-
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Magic link verification not yet implemented",
-    )
 
 
 @router.get("/oauth/google")

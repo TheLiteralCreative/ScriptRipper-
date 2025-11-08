@@ -12,6 +12,7 @@ alembic==1.13.1
 # Redis
 redis==5.0.1
 hiredis==2.3.2
+rq==1.15.1  # Redis Queue for background jobs
 
 # Authentication
 python-jose[cryptography]==3.3.0
@@ -24,6 +25,8 @@ google-auth-oauthlib==1.2.0
 
 # LLM Providers
 google-generativeai==0.8.3
+openai==1.57.4
+anthropic==0.40.0
 
 # Email
 sendgrid==6.11.0
@@ -84,3 +87,6 @@ aiofiles==23.2.1
 
 # Middleware
 slowapi==0.1.9  # Rate limiting
+
+# Error Tracking
+sentry-sdk[fastapi]==1.40.0  # Error tracking and performance monitoring

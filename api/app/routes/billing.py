@@ -33,6 +33,12 @@ class SubscriptionStatusResponse(BaseModel):
     stripe_customer_id: str | None = None
 
 
+class CustomerPortalResponse(BaseModel):
+    """Customer portal response schema."""
+
+    url: str
+
+
 @router.post("/create-checkout-session", response_model=CheckoutSessionResponse)
 async def create_checkout_session(
     current_user: User = Depends(get_current_user),
@@ -222,6 +228,54 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     return {"status": "success"}
 
 
+@router.post("/create-portal-session", response_model=CustomerPortalResponse)
+async def create_portal_session(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create a Stripe Customer Portal session for subscription management.
+
+    Users can manage their subscription, update payment methods, and view invoices.
+
+    Args:
+        current_user: Current authenticated user
+
+    Returns:
+        Customer Portal session URL
+
+    Raises:
+        503: Stripe not configured
+        400: User has no Stripe customer ID
+    """
+    if not settings.STRIPE_SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stripe is not configured",
+        )
+
+    # Check if user has a Stripe customer ID
+    if not hasattr(current_user, 'stripe_customer_id') or not current_user.stripe_customer_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No Stripe customer ID found. Please create a subscription first.",
+        )
+
+    try:
+        # Create Stripe Customer Portal session
+        portal_session = stripe.billing_portal.Session.create(
+            customer=current_user.stripe_customer_id,
+            return_url=settings.STRIPE_SUCCESS_URL,  # Where to return after portal
+        )
+
+        return CustomerPortalResponse(url=portal_session.url)
+
+    except stripe.error.StripeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Stripe error: {str(e)}",
+        )
+
+
 @router.post("/cancel-subscription")
 async def cancel_subscription(
     current_user: User = Depends(get_current_user),
@@ -229,11 +283,15 @@ async def cancel_subscription(
     """
     Cancel current subscription.
 
+    DEPRECATED: Use /create-portal-session instead for self-service cancellation.
+
+    This endpoint redirects users to use the Stripe Customer Portal.
+
     Args:
         current_user: Current authenticated user
 
     Returns:
-        Success message
+        Message directing to Customer Portal
     """
     if not settings.STRIPE_SECRET_KEY:
         raise HTTPException(
@@ -247,8 +305,7 @@ async def cancel_subscription(
             detail="User does not have an active subscription",
         )
 
-    # For now, return a message to cancel via Stripe portal
-    # In production, you'd implement Stripe Customer Portal
     return {
-        "message": "To cancel your subscription, please contact support or use the Stripe customer portal"
+        "message": "To cancel your subscription, please use the /create-portal-session endpoint to access the Stripe Customer Portal",
+        "recommendation": "Call POST /api/v1/billing/create-portal-session to get the portal URL"
     }

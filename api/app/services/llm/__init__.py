@@ -37,12 +37,18 @@ class LLMProviderFactory:
             return GeminiProvider(api_key=key, model=model)
 
         elif provider.lower() == "openai":
-            # TODO: Implement OpenAI provider
-            raise NotImplementedError("OpenAI provider not yet implemented")
+            from app.services.llm.openai import OpenAIProvider
+            key = api_key or settings.OPENAI_API_KEY
+            if not key:
+                raise ValueError("OpenAI API key not configured")
+            return OpenAIProvider(api_key=key, model=model)
 
         elif provider.lower() == "anthropic":
-            # TODO: Implement Anthropic provider
-            raise NotImplementedError("Anthropic provider not yet implemented")
+            from app.services.llm.anthropic import AnthropicProvider
+            key = api_key or settings.ANTHROPIC_API_KEY
+            if not key:
+                raise ValueError("Anthropic API key not configured")
+            return AnthropicProvider(api_key=key, model=model)
 
         else:
             raise ValueError(f"Unknown provider: {provider}")

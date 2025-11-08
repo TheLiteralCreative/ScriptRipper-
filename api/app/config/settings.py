@@ -83,6 +83,9 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = Field(default=50)
     ALLOWED_EXTENSIONS: str = Field(default="json,txt,srt,vtt")
 
+    # Transcript Limits
+    MAX_TRANSCRIPT_LENGTH: int = Field(default=500000)  # 500K characters (~125K tokens)
+
     def get_allowed_extensions_list(self) -> List[str]:
         """Parse allowed extensions from comma-separated string."""
         if isinstance(self.ALLOWED_EXTENSIONS, str):
@@ -99,6 +102,11 @@ class Settings(BaseSettings):
     STRIPE_PRO_PRICE_ID: Optional[str] = Field(default=None)
     STRIPE_SUCCESS_URL: str = Field(default="http://localhost:3000/subscription/success")
     STRIPE_CANCEL_URL: str = Field(default="http://localhost:3000/subscription/cancel")
+
+    # Sentry Error Tracking
+    SENTRY_DSN: Optional[str] = Field(default=None)
+    SENTRY_TRACES_SAMPLE_RATE: float = Field(default=0.1)  # 10% of transactions
+    SENTRY_PROFILES_SAMPLE_RATE: float = Field(default=0.1)  # 10% of transactions
 
     @property
     def is_development(self) -> bool:

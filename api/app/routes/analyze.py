@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.config.database import get_db
+from app.config.settings import get_settings
 from app.models.profile import Profile
 from app.models.user import User
 from app.models.prompt import Prompt
@@ -15,8 +16,36 @@ from app.services.analysis import AnalysisService
 from app.services.llm import LLMProviderFactory
 from app.utils.dependencies import get_current_user
 from app.utils.rate_limit import can_user_rip, record_rip
+from app.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
+settings = get_settings()
 
 router = APIRouter()
+
+
+def validate_transcript_size(transcript: str) -> None:
+    """Validate transcript length.
+
+    Args:
+        transcript: Transcript text to validate
+
+    Raises:
+        HTTPException: If transcript exceeds maximum length
+    """
+    if len(transcript) > settings.MAX_TRANSCRIPT_LENGTH:
+        raise HTTPException(
+            status_code=413,
+            detail={
+                "error": {
+                    "code": "transcript_too_large",
+                    "message": f"Transcript exceeds maximum length of {settings.MAX_TRANSCRIPT_LENGTH:,} characters (received: {len(transcript):,})",
+                    "retryable": False,
+                    "max_length": settings.MAX_TRANSCRIPT_LENGTH,
+                    "actual_length": len(transcript),
+                }
+            },
+        )
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -42,6 +71,9 @@ async def analyze_transcript(
         400: Invalid transcript or profile
         500: Analysis failed
     """
+    # Validate transcript size
+    validate_transcript_size(request.transcript)
+
     # Find profile by key
     result = await db.execute(
         select(Profile).where(Profile.key == request.profile_key)
@@ -84,8 +116,7 @@ async def analyze_transcript(
         return AnalyzeResponse(**result)
 
     except Exception as e:
-        # Log error (in production, use proper logging)
-        print(f"Analysis failed: {e}")
+        logger.error(f"Analysis failed: {e}", exc_info=True)
 
         raise HTTPException(
             status_code=500,
@@ -114,8 +145,12 @@ async def analyze_custom_task(
         Analysis result with token usage and cost
 
     Raises:
+        413: Transcript too large
         500: Analysis failed
     """
+    # Validate transcript size
+    validate_transcript_size(request.transcript)
+
     try:
         # Create LLM provider
         provider = LLMProviderFactory.create(
@@ -143,10 +178,7 @@ async def analyze_custom_task(
         )
 
     except Exception as e:
-        # Log error (in production, use proper logging)
-        print(f"Custom analysis failed: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Custom analysis failed: {e}", exc_info=True)
 
         raise HTTPException(
             status_code=500,
@@ -180,9 +212,13 @@ async def analyze_batch(
         Analysis results for all tasks with usage tracking
 
     Raises:
+        413: Transcript too large
         429: Daily quota exceeded
         500: Analysis failed
     """
+    # Validate transcript size
+    validate_transcript_size(request.transcript)
+
     # Check rate limit
     can_proceed, message = await can_user_rip(str(current_user.id), db)
     if not can_proceed:
@@ -265,10 +301,7 @@ async def analyze_batch(
         raise
 
     except Exception as e:
-        # Log error (in production, use proper logging)
-        print(f"Batch analysis failed: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Batch analysis failed: {e}", exc_info=True)
 
         raise HTTPException(
             status_code=500,

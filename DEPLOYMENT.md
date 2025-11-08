@@ -1,14 +1,160 @@
 # ScriptRipper Deployment Guide
 
+## Quick Start: Deploy to scriptripper.com (15 minutes)
+
+This is the **fastest path** to get ScriptRipper+ live at scriptripper.com using Railway + GoDaddy.
+
+### What You Need
+- GitHub account with ScriptRipper+ repo
+- GoDaddy account with scriptripper.com domain ✓ (you have this)
+- API keys: Gemini, Stripe
+
+### Step 1: Deploy to Railway (5 min)
+
+1. **Sign up for Railway**: Go to [railway.app](https://railway.app) → Sign in with GitHub
+
+2. **Create New Project**:
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your `ScriptRipper+` repository
+   - Railway auto-detects Dockerfile and starts building
+
+3. **Add PostgreSQL**:
+   - Click "+ New" → "Database" → "PostgreSQL"
+   - Railway provisions managed database
+   - Copy the `DATABASE_URL` from the PostgreSQL service variables
+
+4. **Add Redis**:
+   - Click "+ New" → "Database" → "Redis"
+   - Copy the `REDIS_URL` from the Redis service variables
+
+5. **Configure API Environment Variables**:
+   - Click on your `api` service → "Variables" tab
+   - Add all these variables:
+
+   ```bash
+   DATABASE_URL=<from PostgreSQL service>
+   REDIS_URL=<from Redis service>
+   GEMINI_API_KEY=<your Gemini key>
+   JWT_SECRET=<generate random 32+ char string>
+   STRIPE_SECRET_KEY=sk_live_<your live key>
+   STRIPE_PRO_PRICE_ID=price_<your price ID>
+   STRIPE_WEBHOOK_SECRET=whsec_<will add after webhook setup>
+   STRIPE_SUCCESS_URL=https://scriptripper.com/success
+   STRIPE_CANCEL_URL=https://scriptripper.com/pricing
+   ENVIRONMENT=production
+   LOG_LEVEL=INFO
+   CORS_ORIGINS=https://scriptripper.com,https://www.scriptripper.com
+   ```
+
+6. **Add Worker Service**:
+   - Click "+ New" → "Empty Service"
+   - Name: `worker`
+   - Settings → "Dockerfile Path" → `Dockerfile.worker`
+   - Add same environment variables as API
+   - Deploy
+
+### Step 2: Configure GoDaddy DNS (5 min)
+
+1. **Get Railway Domain**:
+   - In Railway, click on `api` service
+   - Go to "Settings" → "Networking" → "Generate Domain"
+   - Railway gives you: `scriptripper-production-xyz.up.railway.app`
+   - Click "Add Custom Domain" → Enter: `scriptripper.com`
+
+2. **Railway Shows DNS Instructions** - Choose one:
+
+   **Option A: CNAME (Easiest)**
+   - Type: `CNAME`
+   - Name: `@`
+   - Value: `<your-railway-domain>.up.railway.app`
+   - TTL: `600`
+
+   **Option B: A Record**
+   - Type: `A`
+   - Name: `@`
+   - Value: `<IP from Railway>`
+   - TTL: `600`
+
+3. **Log into GoDaddy**:
+   - Go to [godaddy.com](https://godaddy.com) → My Products → Domains
+   - Click on scriptripper.com → DNS Management
+
+4. **Add DNS Records**:
+   - Click "Add" → Select record type (CNAME or A based on Railway's instructions)
+   - **Delete any existing `@` A records** (GoDaddy parking page)
+   - Add the record as Railway instructed
+   - Also add www CNAME:
+     - Type: `CNAME`
+     - Name: `www`
+     - Value: `scriptripper.com`
+     - TTL: `600`
+   - Click "Save"
+
+5. **Wait for DNS Propagation** (10-30 minutes):
+   - Check status: `dig scriptripper.com`
+   - Or use: https://dnschecker.org
+
+### Step 3: SSL Auto-Configuration (5 min)
+
+Railway automatically provisions SSL certificates:
+- Once DNS propagates, Railway detects your domain
+- Let's Encrypt SSL certificate issued automatically
+- Your site becomes available at `https://scriptripper.com`
+
+### Step 4: Configure Stripe Webhook
+
+1. **In Stripe Dashboard**:
+   - Go to: Developers → Webhooks → "Add endpoint"
+   - Endpoint URL: `https://scriptripper.com/api/v1/billing/webhook`
+   - Select events:
+     - `checkout.session.completed`
+     - `customer.subscription.deleted`
+     - `customer.subscription.updated`
+   - Click "Add endpoint"
+   - **Copy Webhook Signing Secret** (starts with `whsec_`)
+
+2. **Update Railway**:
+   - Go back to Railway → `api` service → Variables
+   - Add: `STRIPE_WEBHOOK_SECRET=whsec_<your secret>`
+   - Railway auto-redeploys
+
+### Step 5: Initialize Database
+
+1. **Run Migrations**:
+   - Railway → `api` service → "Deployments"
+   - Click latest deployment → "View Logs"
+   - Migrations should run automatically on startup
+
+2. **Seed Prompts**:
+   ```bash
+   # SSH into Railway container or run via Railway CLI
+   python3 scripts/seed_prompts.py
+   ```
+
+### Step 6: Test Live Site
+
+```bash
+# Health check
+curl https://scriptripper.com/health
+
+# Should return:
+# {"status":"healthy","database":"connected","redis":"connected"}
+```
+
+Visit: **https://scriptripper.com/docs** to see your live API!
+
+---
+
 ## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Environment Setup](#environment-setup)
-3. [Stripe Configuration](#stripe-configuration)
-4. [Purelymail Setup](#purelymail-setup)
-5. [Database Migrations](#database-migrations)
-6. [Local Development](#local-development)
-7. [Production Deployment](#production-deployment)
-8. [Post-Deployment](#post-deployment)
+1. [Quick Start: Deploy to scriptripper.com](#quick-start-deploy-to-scriptrippercom-15-minutes)
+2. [Prerequisites](#prerequisites)
+3. [Environment Setup](#environment-setup)
+4. [Stripe Configuration](#stripe-configuration)
+5. [Purelymail Setup](#purelymail-setup)
+6. [Database Migrations](#database-migrations)
+7. [Local Development](#local-development)
+8. [Production Deployment](#production-deployment)
+9. [Post-Deployment](#post-deployment)
 
 ## Prerequisites
 
