@@ -294,5 +294,4 @@ databases:
     # Upgrade plans: https://render.com/pricing#redis
     # - starter: $10/mo - 256MB RAM
     # - standard: $50/mo - 1GB RAM
-    maxmemoryPolicy: allkeys-lru  # Evict least recently used keys
     ipAllowList: []  # Empty = allow all Render services (recommended)
