@@ -397,6 +397,37 @@ Handle common issues:
 - Shell access for running commands
 - Metrics and monitoring built-in
 
+## Two-Stage Deployment Strategy
+
+**IMPORTANT**: Use a two-stage approach for cost-effective deployment:
+
+### Stage 1: Free Tier (Initial Deploy)
+Deploy only these services:
+- ✅ API Web Service (free)
+- ✅ PostgreSQL Database (free - 256MB RAM, 1GB storage)
+- ✅ Redis Cache (free - 25MB RAM)
+
+**Total cost**: $0/month
+
+**Omit from render.yaml**: Background Worker (not available on free tier)
+
+### Stage 2: Add Worker (When Needed)
+After Stage 1 is validated and working:
+- Add background worker using `add-render-worker.md` agent
+- Minimum cost: $7/month for Starter worker plan
+
+**Why this approach?**
+1. Validate core functionality for free
+2. Test API, database, and caching before adding costs
+3. Add worker only when background processing is confirmed needed
+4. Easier troubleshooting with fewer moving parts initially
+
+**When generating render.yaml**: Include comment pointing to Stage 2 agent:
+```yaml
+# NOTE: Background Worker removed for free tier deployment
+# To add worker later, use: .claude/prompts/examples/add-render-worker.md
+```
+
 Begin infrastructure generation now.
 ```
 
