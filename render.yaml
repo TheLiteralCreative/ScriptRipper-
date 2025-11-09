@@ -175,6 +175,46 @@ services:
       - key: SENTRY_PROFILES_SAMPLE_RATE
         value: 0.1
 
+  # ============================================================================
+  # Web Frontend Service (Next.js)
+  # ============================================================================
+  - type: web
+    name: scriptripper-web
+    env: docker
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
+    region: oregon  # Must match API region
+    plan: free
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+
+    # Environment variables for Web frontend
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: NEXT_PUBLIC_API_URL
+        value: https://scriptripper-api.onrender.com
+
+      - key: NEXT_PUBLIC_APP_NAME
+        value: ScriptRipper
+
+      - key: NEXT_PUBLIC_APP_VERSION
+        value: 0.1.0
+
+      - key: NEXT_PUBLIC_ENABLE_CUSTOM_PROMPTS
+        value: true
+
+      - key: NEXT_PUBLIC_ENABLE_BATCH_UPLOAD
+        value: true
+
+      - key: NEXT_PUBLIC_MAX_FILE_SIZE_MB
+        value: 50
+
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        value: 903837883038-6bepg6a6umbbqblhko51uk9l9735s42e.apps.googleusercontent.com
+
 # ============================================================================
 # Database Services
 # ============================================================================
