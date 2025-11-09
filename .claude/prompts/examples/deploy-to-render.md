@@ -559,6 +559,7 @@ To adapt this template for different applications:
 ## Related Templates
 
 - `add-render-redis-api.md` - **Automate Redis creation via Render API** (recommended)
+- `add-render-domain.md` - **Automate custom domain setup via Render API** (recommended)
 - `add-render-worker.md` - Add background worker service ($7/month)
 - `deploy-to-railway.md` - Alternative platform (CLI-based)
 - `add-database-adapter.md` - If using different database
