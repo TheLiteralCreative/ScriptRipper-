@@ -181,8 +181,9 @@ services:
   - type: web
     name: scriptripper-web
     env: docker
-    dockerfilePath: ./web/Dockerfile
-    dockerContext: ./web
+    rootDir: web
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     region: oregon  # Must match API region
     plan: free
     branch: main
