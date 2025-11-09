@@ -363,6 +363,30 @@ Handle common issues:
        ipAllowList: []
    ```
 
+4. **CRITICAL: Redis CANNOT be defined in render.yaml at all**
+   ```yaml
+   # ❌ WRONG - Render Blueprint databases: only supports PostgreSQL
+   databases:
+     - name: scriptripper-redis  # This creates a PostgreSQL DB, NOT Redis!
+       plan: free
+
+   # ✅ CORRECT - Omit Redis entirely from render.yaml
+   databases:
+     - name: scriptripper-db  # Only PostgreSQL
+       plan: free
+
+   # Redis must be created MANUALLY via Render Dashboard
+   # Then REDIS_URL must be manually set in environment variables
+   ```
+
+   **Why?** Render's Blueprint `databases:` section ONLY supports PostgreSQL, not Redis.
+
+   **Solution**:
+   - Remove Redis from render.yaml entirely
+   - Create `setup_redis.md` file with manual Redis creation steps
+   - Set `REDIS_URL` to `sync: false` (manual entry required)
+   - Document in deployment guide that Redis is a post-deployment manual step
+
 ### Environment variable missing
 - List all required variables
 - Indicate which are user-provided

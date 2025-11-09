@@ -39,11 +39,10 @@ services:
           property: connectionString
 
       # ---- Redis Connection ----
-      # Auto-populated from the Redis database below
+      # MUST be manually set after creating Redis instance
+      # Render Blueprint does NOT support Redis - create manually via dashboard
       - key: REDIS_URL
-        fromDatabase:
-          name: scriptripper-redis
-          property: connectionString
+        sync: false  # Manual - get from Redis service after creation
 
       # ---- JWT Security ----
       # IMPORTANT: Copy from .env.render (auto-generated)
@@ -181,6 +180,10 @@ services:
 # ============================================================================
 # NOTE: Background Worker removed for free tier deployment
 # To add worker later, use: .claude/prompts/examples/add-render-worker.md
+#
+# NOTE: Redis must be created MANUALLY via Render Dashboard
+# Render Blueprint does NOT support Redis in databases: section
+# After deployment: Create Redis manually, then update REDIS_URL environment variable
 databases:
   # PostgreSQL Database
   - name: scriptripper-db
@@ -191,13 +194,4 @@ databases:
     # Upgrade plans: https://render.com/pricing#databases
     # - starter: $7/mo - 1GB RAM, 10GB storage
     # - standard: $20/mo - 4GB RAM, 100GB storage
-    ipAllowList: []  # Empty = allow all Render services (recommended)
-
-  # Redis Cache
-  - name: scriptripper-redis
-    region: oregon  # Should match services region
-    plan: free  # Free tier: 25MB RAM
-    # Upgrade plans: https://render.com/pricing#redis
-    # - starter: $10/mo - 256MB RAM
-    # - standard: $50/mo - 1GB RAM
     ipAllowList: []  # Empty = allow all Render services (recommended)
