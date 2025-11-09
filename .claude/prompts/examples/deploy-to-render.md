@@ -387,6 +387,12 @@ Handle common issues:
    - Set `REDIS_URL` to `sync: false` (manual entry required)
    - Document in deployment guide that Redis is a post-deployment manual step
 
+   **BETTER Solution (Automated)**:
+   - Use `add-render-redis-api.md` agent to automate Redis creation via API
+   - Agent handles: create Redis, get URL, update env var, redeploy, verify
+   - Requires only Render API key (from https://dashboard.render.com/u/settings/api-keys)
+   - 90% faster than manual (2 min vs 10 min)
+
 ### Environment variable missing
 - List all required variables
 - Indicate which are user-provided
@@ -552,6 +558,8 @@ To adapt this template for different applications:
 
 ## Related Templates
 
+- `add-render-redis-api.md` - **Automate Redis creation via Render API** (recommended)
+- `add-render-worker.md` - Add background worker service ($7/month)
 - `deploy-to-railway.md` - Alternative platform (CLI-based)
 - `add-database-adapter.md` - If using different database
 - `add-error-tracking.md` - Add Sentry after deployment
