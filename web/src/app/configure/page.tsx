@@ -99,7 +99,9 @@ export default function ConfigurePage() {
   };
 
   const handleContinue = () => {
-    if (!transcriptType || selectedPrompts.size === 0) return;
+    // Require at least one prompt (pre-built OR custom)
+    const hasPrompts = selectedPrompts.size > 0 || customPrompt.trim();
+    if (!transcriptType || !hasPrompts) return;
 
     // Store configuration
     sessionStorage.setItem('transcriptType', transcriptType);
@@ -323,7 +325,7 @@ export default function ConfigurePage() {
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 onClick={handleContinue}
-                disabled={!transcriptType || selectedPrompts.size === 0}
+                disabled={!transcriptType || (selectedPrompts.size === 0 && !customPrompt.trim())}
                 size="lg"
                 className="bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
               >
