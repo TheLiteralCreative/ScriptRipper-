@@ -234,6 +234,7 @@ export default function ConfigurePage() {
         {/* Prompt Selection */}
         {transcriptType && (
           <motion.div
+            key={transcriptType}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -248,8 +249,20 @@ export default function ConfigurePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {availablePrompts.map((prompt, index) => (
+                {loadingPrompts ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-900 border-r-transparent"></div>
+                      <p className="mt-4 text-sm text-gray-600">Loading prompts...</p>
+                    </div>
+                  </div>
+                ) : availablePrompts.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-sm text-gray-500">No prompts available for this category</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {availablePrompts.map((prompt, index) => (
                     <motion.button
                       key={prompt.task_name}
                       initial={{ opacity: 0, y: 10 }}
@@ -275,6 +288,7 @@ export default function ConfigurePage() {
                     </motion.button>
                   ))}
                 </div>
+                )}
 
               {/* Custom Prompt */}
               <div className="mt-6">
