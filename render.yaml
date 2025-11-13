@@ -181,9 +181,8 @@ services:
   - type: web
     name: scriptripper-web
     env: docker
-    rootDir: web
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
     region: oregon  # Must match API region
     plan: free
     branch: main
@@ -196,7 +195,7 @@ services:
         value: production
 
       - key: NEXT_PUBLIC_API_URL
-        value: https://scriptripper-api.onrender.com
+        value: https://api.scriptripper.com
 
       - key: NEXT_PUBLIC_APP_NAME
         value: ScriptRipper
@@ -210,21 +209,85 @@ services:
       - key: NEXT_PUBLIC_ENABLE_BATCH_UPLOAD
         value: true
 
+      - key: NEXT_PUBLIC_APP_HOST
+        value: https://www.scriptripper.com
+
       - key: NEXT_PUBLIC_MAX_FILE_SIZE_MB
         value: 50
 
       - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
-        value: 903837883038-6bepg6a6umbbqblhko51uk9l9735s42e.apps.googleusercontent.com
+        sync: false
+
+  # ============================================================================
+  # Background Worker Service (Stage 2 - Paid Plan)
+  # ============================================================================
+  - type: worker
+    name: scriptripper-worker
+    env: docker
+    dockerfilePath: ./worker/Dockerfile
+    dockerContext: ./worker
+    region: oregon  # Align with API region
+    plan: starter  # workers require paid plan
+    branch: main
+    autoDeploy: true
+
+    envVars:
+      - key: APP_NAME
+        value: ScriptRipper
+
+      - key: ENVIRONMENT
+        value: production
+
+      - key: LOG_LEVEL
+        value: INFO
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: scriptripper-db
+          property: connectionString
+
+      - key: REDIS_URL
+        sync: false  # Populate manually once Redis is provisioned
+
+      - key: GEMINI_API_KEY
+        sync: false
+
+      - key: OPENAI_API_KEY
+        sync: false
+
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      - key: DEFAULT_LLM_PROVIDER
+        value: gemini
+
+      - key: PURELYMAIL_API_TOKEN
+        sync: false
+
+      - key: PURELYMAIL_SMTP_HOST
+        value: smtp.purelymail.com
+
+      - key: PURELYMAIL_SMTP_PORT
+        value: 587
+
+      - key: PURELYMAIL_SMTP_USER
+        sync: false
+
+      - key: PURELYMAIL_SMTP_PASS
+        sync: false
+
+      - key: FROM_EMAIL
+        value: noreply@scriptripper.com
+
+      - key: MAX_TRANSCRIPT_LENGTH
+        value: 500000
+
+      - key: SENTRY_DSN
+        sync: false
 
 # ============================================================================
 # Database Services
 # ============================================================================
-# NOTE: Background Worker removed for free tier deployment
-# To add worker later, use: .claude/prompts/examples/add-render-worker.md
-#
-# NOTE: Redis must be created MANUALLY via Render Dashboard
-# Render Blueprint does NOT support Redis in databases: section
-# After deployment: Create Redis manually, then update REDIS_URL environment variable
 databases:
   # PostgreSQL Database
   - name: scriptripper-db

@@ -14,43 +14,43 @@
 
 ---
 
-### Step 2: Add CNAME Record for www subdomain
+### Step 2: Point `www` to the Web UI (Vercel)
 
-**Delete any existing www records first**, then add:
+Deploy the Next.js UI on Vercel first, then copy the assigned hostname (e.g., `scriptripper-web.vercel.app`). **Delete any existing `www` records** and add:
 
 ```
 Type: CNAME
 Name: www
-Value: scriptripper-api.onrender.com
+Value: <your-vercel-domain>.vercel.app
 TTL: 600 (10 minutes)
 ```
 
-**Important**: Remove the trailing dot if GoDaddy adds one automatically.
+> Example: `Value = scriptripper-web.vercel.app`
 
----
+### Step 3: Point `api` to the FastAPI service (Render)
 
-### Step 3: Configure Apex Domain (scriptripper.com)
-
-**Option A: CNAME Flattening (Recommended if GoDaddy supports it)**
-
-GoDaddy now supports CNAME flattening for apex domains:
+Add a dedicated subdomain for the API:
 
 ```
 Type: CNAME
-Name: @
+Name: api
 Value: scriptripper-api.onrender.com
 TTL: 600
 ```
 
-**Option B: If CNAME doesn't work for @ (older GoDaddy)**
+Update the Render service with the custom domain once DNS propagates so TLS is issued for `api.scriptripper.com`.
 
-You'll need to forward the apex domain:
+### Step 4: Configure Apex Domain (scriptripper.com)
 
-1. In GoDaddy DNS, delete any existing @ A records
-2. Go to: Domain Settings → Forwarding → Domain
-3. Forward to: https://www.scriptripper.com
-4. Forward Type: Permanent (301)
-5. Then the www CNAME (from Step 2) will handle all traffic
+Keep the apex focused on the UI. GoDaddy does not allow a direct CNAME at `@`, so use forwarding:
+
+1. Remove every existing `@` A record (typically parking entries).
+2. Domain Settings → Forwarding → Domain → Add Forwarding.
+3. Forward to: `https://www.scriptripper.com`
+4. Type: Permanent (301), Settings: Forward only.
+5. Save.
+
+This keeps SEO consistent and ensures all human traffic flows through the Vercel-hosted UI before hitting the API.
 
 ---
 
@@ -71,19 +71,12 @@ Before making changes, check what you currently have:
 
 ## Expected Final DNS Configuration
 
-After setup, your DNS should look like:
+After setup, the key records will look like:
 
 ```
-Type    Name    Value                           TTL
-CNAME   www     scriptripper-api.onrender.com   600
-CNAME   @       scriptripper-api.onrender.com   600
-```
-
-OR (if using forwarding):
-
-```
-Type    Name    Value                           TTL
-CNAME   www     scriptripper-api.onrender.com   600
+Type    Name    Value                                   TTL
+CNAME   www     <your-vercel-domain>.vercel.app         600
+CNAME   api     scriptripper-api.onrender.com           600
 
 Domain Forwarding:
 scriptripper.com → https://www.scriptripper.com (301 permanent)
@@ -167,9 +160,9 @@ curl https://scriptripper.com/health
 
 ## Quick Reference
 
-**Service URL (current)**: https://scriptripper-api.onrender.com
-**Custom Domain (target)**: https://scriptripper.com
-**WWW Subdomain**: https://www.scriptripper.com
+**Service URL (current API)**: https://scriptripper-api.onrender.com  
+**UI Host (target)**: https://www.scriptripper.com (Vercel)  
+**API Host (target)**: https://api.scriptripper.com
 
 **Render Domain IDs**:
 - Apex: cdm-d4886sjuibrs7393l2eg
@@ -194,7 +187,10 @@ curl https://scriptripper.com/health
 
 ## Next Steps
 
-1. **Now**: Add DNS records in GoDaddy (see Step 2 & 3 above)
-2. **Wait**: 10-30 minutes for DNS propagation
-3. **Verify**: Check https://scriptripper.com/health
-4. **Celebrate**: Your app is live on a custom domain! 🎉
+1. **Now**: Add/adjust DNS records in GoDaddy (Steps 2-4 above)
+2. **Wait**: 10-30 minutes for propagation
+3. **Verify**:
+   - `dig www.scriptripper.com CNAME`
+   - `dig api.scriptripper.com CNAME`
+   - `curl https://api.scriptripper.com/health`
+4. **Celebrate**: UI at `www`, API at `api` with valid SSL 🎉

@@ -1,7 +1,7 @@
 # ScriptRipper+ Deployment Checklist
 
 **Status**: Ready for deployment
-**Platform**: Railway → scriptripper.com
+**Platform**: Render → scriptripper.com (browser-based, no CLI)
 **Estimated Time**: 15-20 minutes
 
 ---
@@ -20,10 +20,10 @@
 
 ---
 
-## 📋 What You Need Tomorrow Morning (5 items)
+## 📋 What You Need (5 items)
 
-### 1. Railway Account
-- [ ] Sign up at https://railway.app (free, 2 minutes)
+### 1. Render Account
+- [ ] Sign up at https://render.com (free, 2 minutes)
 - [ ] Connect your GitHub account
 - [ ] No credit card required to start
 

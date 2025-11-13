@@ -1,8 +1,10 @@
 # Agent Template: Add Render Background Worker (Stage 2)
 
-**Pattern**: Infrastructure Expansion (Two-Stage Deployment)
-**Difficulty**: Easy
-**Prerequisites**: Stage 1 deployed (API + PostgreSQL + Redis working)
+**Pattern**: Infrastructure Expansion (Two-Stage Deployment)  
+**Difficulty**: Easy  
+**Prerequisites**:
+- Stage 1 deployed (API + PostgreSQL + Redis working)
+- Read `docs/spec/SPEC.md` (§8 architecture, §3 Gherkin flows), `PROJECT_ALIGNMENT_PLAN.md`, and `docs/runbooks/DEPLOY_WEB_AND_WORKER.md`
 **Cost**: $7/month for Starter worker plan
 
 ---
@@ -25,7 +27,7 @@ This agent adds a **background worker service** to an existing Render deployment
 ## Agent Prompt
 
 ```
-You are a Render infrastructure expansion agent. Add a background worker service to an existing Render Blueprint deployment.
+You are a Render infrastructure expansion agent. Add a background worker service to an existing Render Blueprint deployment so ScriptRipper conforms to SPEC §8.
 
 ## Context
 
@@ -34,7 +36,7 @@ You are a Render infrastructure expansion agent. Add a background worker service
 - PostgreSQL Database (scriptripper-db)
 - Redis Cache (scriptripper-redis)
 
-**Goal**: Add background worker service to handle async tasks
+**Goal**: Add background worker service to handle async tasks (transcript analysis queue) and document the change.
 
 ## Your Responsibilities
 
@@ -176,6 +178,14 @@ Add this to render.yaml services section:
 - Watch build logs
 - Verify worker starts successfully
 - Check worker logs for job processing
+
+### 5. Functional Verification
+- Enqueue a test analysis job via `/api/v1/jobs`
+- Poll job status until `finished`
+- Capture worker logs showing successful execution
+
+### 6. Documentation
+- Append a dated entry to `DEPLOYMENT_SUCCESS.md` summarizing the worker go-live, tests run, and remaining risks
 
 ## Validation Checklist
 
