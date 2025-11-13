@@ -14,6 +14,7 @@ from app.models.prompt import Prompt
 
 async def seed_prompts():
     """Seed prompts from JSON files into database."""
+    from sqlalchemy import select
 
     # Read JSON files
     script_dir = Path(__file__).parent
@@ -27,6 +28,17 @@ async def seed_prompts():
         presentations_prompts = json.load(f)
 
     async with AsyncSessionLocal() as db:
+        # Check if prompts already exist
+        result = await db.execute(select(Prompt))
+        existing_prompts = result.scalars().all()
+
+        if existing_prompts:
+            print(f"ℹ️  Database already has {len(existing_prompts)} prompts, skipping seed")
+            return
+
+        meetings_added = 0
+        presentations_added = 0
+
         # Add meetings prompts
         for prompt_data in meetings_prompts:
             prompt = Prompt(
@@ -36,6 +48,7 @@ async def seed_prompts():
                 is_active=True,
             )
             db.add(prompt)
+            meetings_added += 1
 
         # Add presentations prompts
         for prompt_data in presentations_prompts:
@@ -46,10 +59,11 @@ async def seed_prompts():
                 is_active=True,
             )
             db.add(prompt)
+            presentations_added += 1
 
         await db.commit()
-        print(f"✅ Seeded {len(meetings_prompts)} meetings prompts")
-        print(f"✅ Seeded {len(presentations_prompts)} presentations prompts")
+        print(f"✅ Seeded {meetings_added} meetings prompts")
+        print(f"✅ Seeded {presentations_added} presentations prompts")
 
 
 if __name__ == "__main__":
