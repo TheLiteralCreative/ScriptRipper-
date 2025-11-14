@@ -154,13 +154,26 @@ cp -r .claude/commands /path/to/new-project/.claude/
 # Or copy specific agents
 cp .claude/commands/render-oversight.md /path/to/new-project/.claude/commands/
 cp .claude/commands/vercel-oversight.md /path/to/new-project/.claude/commands/
+cp .claude/commands/godaddy-dns.md /path/to/new-project/.claude/commands/
+cp .claude/commands/dns-orchestrator.md /path/to/new-project/.claude/commands/
 ```
 
-**Then customize for the new project:**
-1. Update service names (search/replace "scriptripper")
-2. Update domain names
-3. Update service IDs
-4. Update file paths
+**That's it! No customization needed.**
+
+These agents are **project-agnostic** and auto-detect:
+- Project name (from directory or package.json)
+- Service names (from render.yaml, .vercel/project.json)
+- Domain names (from vercel.json or asking you)
+- Framework (Next.js, Django, Rails, etc.)
+- Platform configuration (Vercel, Render, or others)
+
+**They work with ANY stack:**
+- Vercel + Render (like ScriptRipper+)
+- Netlify + Railway
+- AWS + Supabase
+- Any combination
+
+Just copy and use immediately!
 
 ## Integration with Existing Commands
 
