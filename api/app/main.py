@@ -10,7 +10,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from app.config.settings import get_settings
 from app.config.database import init_db, close_db
-from app.routes import health, auth, analyze, admin, billing, jobs
+from app.routes import health, auth, analyze, admin, billing, jobs, cleanup
 
 settings = get_settings()
 
@@ -92,6 +92,7 @@ app.include_router(analyze.router, prefix="/api/v1", tags=["Analysis"])
 app.include_router(jobs.router, prefix="/api/v1", tags=["Jobs"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(billing.router, prefix="/api/v1/billing", tags=["Billing"])
+app.include_router(cleanup.router, prefix="/api/v1", tags=["Cleanup"])
 
 
 @app.exception_handler(Exception)
