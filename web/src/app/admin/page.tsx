@@ -44,6 +44,9 @@ export default function AdminDashboard() {
   const [proEmail, setProEmail] = useState('');
   const [proStatus, setProStatus] = useState<string | null>(null);
   const [proBusy, setProBusy] = useState(false);
+  const [tierFilter, setTierFilter] = useState<'all' | 'free' | 'pro' | 'premium'>(
+    'all'
+  );
 
   useEffect(() => {
     loadUsers();
@@ -128,6 +131,10 @@ export default function AdminDashboard() {
   const totalRips = users.reduce((sum, u) => sum + u.total_rips, 0);
   const totalCost = users.reduce((sum, u) => sum + u.total_cost, 0);
   const activeToday = users.filter((u) => u.rips_today > 0).length;
+  const filteredUsers =
+    tierFilter === 'all'
+      ? users
+      : users.filter((u) => u.subscription_tier === tierFilter);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -270,6 +277,19 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-gray-700">Filter by tier:</span>
+                  {(['all', 'free', 'pro', 'premium'] as const).map((tier) => (
+                    <Button
+                      key={tier}
+                      variant={tierFilter === tier ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTierFilter(tier)}
+                    >
+                      {tier === 'all' ? 'All' : tier.charAt(0).toUpperCase() + tier.slice(1)}
+                    </Button>
+                  ))}
+                </div>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -287,7 +307,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
+                      {filteredUsers.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">
                             {user.email}
