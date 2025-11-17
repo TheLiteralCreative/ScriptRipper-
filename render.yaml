@@ -106,7 +106,7 @@ services:
 
       # ---- CORS Configuration ----
       - key: CORS_ORIGINS
-        value: https://scriptripper.com,https://www.scriptripper.com
+        value: https://scriptripper.com,https://www.scriptripper.com,https://scriptripper-api.onrender.com,https://scriptripper-web.onrender.com
 
       # ---- n8n Webhooks (Optional) ----
       - key: N8N_WEBHOOK_URL
