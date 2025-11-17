@@ -14,7 +14,7 @@ services:
     plan: free  # Upgrade to 'starter' or 'standard' for production
     branch: main
     autoDeploy: true
-    healthCheckPath: /health
+    healthCheckPath: /ready
 
     # Environment variables for API service
     envVars:
@@ -187,7 +187,7 @@ services:
     plan: free
     branch: main
     autoDeploy: true
-    healthCheckPath: /
+    healthCheckPath: /render-health
 
     # Environment variables for Web frontend
     envVars:

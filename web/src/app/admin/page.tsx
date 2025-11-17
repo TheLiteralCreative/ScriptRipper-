@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Activity, DollarSign, Calendar } from 'lucide-react';
+import { Users, Activity, DollarSign, Calendar, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -40,6 +41,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<UserStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [proEmail, setProEmail] = useState('');
+  const [proStatus, setProStatus] = useState<string | null>(null);
+  const [proBusy, setProBusy] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -60,6 +64,33 @@ export default function AdminDashboard() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSetPro = async () => {
+    if (!proEmail) {
+      setProStatus('Please enter an email.');
+      return;
+    }
+    try {
+      setProBusy(true);
+      setProStatus(null);
+      await adminApi.setUserPro(proEmail.trim());
+      setProStatus('User updated to Pro.');
+      setProEmail('');
+      await loadUsers();
+    } catch (err: any) {
+      console.error('Failed to set user to Pro:', err);
+      const msg =
+        err.response?.data?.detail ||
+        err.response?.data?.error ||
+        'Failed to update tier';
+      setProStatus(msg);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        router.push('/login');
+      }
+    } finally {
+      setProBusy(false);
     }
   };
 
@@ -137,6 +168,34 @@ export default function AdminDashboard() {
 
         {!loading && !error && (
           <>
+            <Card className="mb-6 border-blue-100 bg-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                  Grant Pro Access
+                </CardTitle>
+                <CardDescription>
+                  Promote a user to Pro without billing (admin-only). Enter their
+                  account email.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={proEmail}
+                  onChange={(e) => setProEmail(e.target.value)}
+                  className="sm:max-w-sm"
+                />
+                <Button onClick={handleSetPro} disabled={proBusy}>
+                  {proBusy ? 'Updating...' : 'Set to Pro'}
+                </Button>
+                {proStatus && (
+                  <p className="text-sm text-gray-700">{proStatus}</p>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Summary Cards */}
             <div className="mb-8 grid gap-4 md:grid-cols-4">
               <Card>

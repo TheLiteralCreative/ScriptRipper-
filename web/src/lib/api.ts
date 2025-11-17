@@ -146,6 +146,11 @@ export const adminApi = {
     const response = await api.delete(`/admin/prompts/${promptId}`);
     return response.data;
   },
+
+  setUserPro: async (email: string) => {
+    const response = await api.post('/admin/users/set-pro', { email });
+    return response.data;
+  },
 };
 
 // Billing API

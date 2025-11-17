@@ -8,7 +8,7 @@ from sqlalchemy import select, func, desc
 from pydantic import BaseModel
 
 from app.config.database import get_db
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, SubscriptionTier
 from app.models.usage import Usage
 from app.models.prompt import Prompt
 from app.utils.dependencies import get_current_user
@@ -81,6 +81,20 @@ class UserDetail(BaseModel):
     total_rips: int
     total_cost: float
     recent_usage: List[UsageRecord]
+
+
+class SetProRequest(BaseModel):
+    """Request to set a user's subscription tier to Pro."""
+
+    email: str
+
+
+class SetProResponse(BaseModel):
+    """Response after updating a user's tier."""
+
+    email: str
+    role: str
+    subscription_tier: str
 
 
 @router.get("/users", response_model=List[UserStats])
@@ -230,6 +244,35 @@ async def get_user_detail(
         total_rips=total_rips,
         total_cost=total_cost,
         recent_usage=recent_usage,
+    )
+
+
+@router.post("/users/set-pro", response_model=SetProResponse)
+async def set_user_pro(
+    request: SetProRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> SetProResponse:
+    """Promote a user to the Pro subscription tier by email."""
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == func.lower(request.email))
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    user.subscription_tier = SubscriptionTier.PRO
+    await db.commit()
+    await db.refresh(user)
+
+    return SetProResponse(
+        email=user.email,
+        role=user.role.value,
+        subscription_tier=user.subscription_tier.value,
     )
 
 
