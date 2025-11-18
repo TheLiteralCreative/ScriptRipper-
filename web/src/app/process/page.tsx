@@ -79,14 +79,20 @@ export default function ProcessPage() {
   ) => {
     setIsProcessing(true);
 
-    const transcriptType = sessionStorage.getItem('transcriptType') as 'meetings' | 'presentations';
+    const metadataJson = sessionStorage.getItem('metadata');
+    const metadata = metadataJson ? JSON.parse(metadataJson) : null;
     const customPromptText = sessionStorage.getItem('customPrompt');
 
     try {
-      // Fetch prompts from API
+      // Fetch all prompts from API (unified list)
       const promptsResponse = await api.get('/prompts');
       const promptsData = promptsResponse.data;
-      const allPrompts = transcriptType === 'meetings' ? promptsData.meetings : promptsData.presentations;
+
+      // Combine all prompts from both categories
+      const allPrompts = [
+        ...(promptsData.meetings || []),
+        ...(promptsData.presentations || []),
+      ];
 
       // Build tasks array for batch API
       const batchTasks = initialTasks.map((task) => {
@@ -120,11 +126,12 @@ export default function ProcessPage() {
         });
       }, 500);
 
-      // Call batch API
+      // Call batch API with metadata
       const batchResponse = await analysisApi.analyzeBatch({
         transcript,
-        transcript_type: transcriptType,
+        transcript_type: 'general', // No longer needed but kept for backward compatibility
         tasks: batchTasks,
+        metadata: metadata, // Pass metadata to backend
       });
 
       clearInterval(updateInterval);

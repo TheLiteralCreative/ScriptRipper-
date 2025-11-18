@@ -21,10 +21,19 @@ interface Result {
   result: string;
 }
 
+interface Metadata {
+  participantCount: number;
+  participantType: string;
+  customType?: string;
+  title: string;
+  date: string;
+  participants: string[];
+}
+
 export default function DownloadPage() {
   const router = useRouter();
   const [results, setResults] = useState<Result[]>([]);
-  const [originalFileName, setOriginalFileName] = useState<string>('');
+  const [metadata, setMetadata] = useState<Metadata | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
@@ -42,23 +51,88 @@ export default function DownloadPage() {
       }
       setResults(JSON.parse(resultsJson));
 
-      // Get original filename if available
-      const fileName = sessionStorage.getItem('originalFileName') || '';
-      setOriginalFileName(fileName);
+      // Get metadata if available
+      const metadataJson = sessionStorage.getItem('metadata');
+      if (metadataJson) {
+        setMetadata(JSON.parse(metadataJson));
+      }
 
       setCheckingAuth(false);
     }
   }, [router]);
 
+  // Utility function to sanitize filenames
+  const sanitizeFilename = (text: string, maxLength: number = 50): string => {
+    if (!text || !text.trim()) return 'Untitled';
+    let sanitized = text.trim().replace(/\s+/g, '-');
+    sanitized = sanitized.replace(/[^a-zA-Z0-9\-_]/g, '');
+    sanitized = sanitized.replace(/-+/g, '-');
+    sanitized = sanitized.replace(/^-+|-+$/g, '');
+    if (sanitized.length > maxLength) {
+      sanitized = sanitized.substring(0, maxLength).replace(/-+$/, '');
+    }
+    return sanitized || 'Untitled';
+  };
+
+  // Generate ZIP filename based on metadata
+  const generateZipFilename = (): string => {
+    const parts = [];
+
+    // Add date if available
+    if (metadata?.date) {
+      try {
+        const dateObj = new Date(metadata.date);
+        parts.push(dateObj.toISOString().split('T')[0]); // YYYY-MM-DD
+      } catch (e) {
+        // Ignore date parsing errors
+      }
+    }
+
+    // Add title if available
+    if (metadata?.title && metadata.title.trim()) {
+      parts.push(sanitizeFilename(metadata.title));
+    } else {
+      parts.push('Transcript-Analysis');
+    }
+
+    // Add "Complete" suffix
+    parts.push('Complete');
+
+    return `${parts.join('_')}.zip`;
+  };
+
+  // Generate individual file name
+  const generateFilename = (taskName: string, extension: string): string => {
+    const parts = [];
+
+    // Add date if available
+    if (metadata?.date) {
+      try {
+        const dateObj = new Date(metadata.date);
+        parts.push(dateObj.toISOString().split('T')[0]); // YYYY-MM-DD
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    // Add title if available
+    if (metadata?.title && metadata.title.trim()) {
+      parts.push(sanitizeFilename(metadata.title));
+    } else {
+      parts.push('Transcript');
+    }
+
+    // Add task name
+    parts.push(sanitizeFilename(taskName));
+
+    return `${parts.join('_')}.${extension}`;
+  };
+
   const handleDownloadZip = async () => {
     const zip = new JSZip();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 
-    // Create filename with original file name
-    const cleanFileName = originalFileName
-      ? originalFileName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_')
-      : 'transcript';
-    const zipFileName = `scriptripper_${cleanFileName}_${timestamp}.zip`;
+    // Generate ZIP filename using metadata
+    const zipFileName = generateZipFilename();
 
     // Create a folder for each format
     const markdownFolder = zip.folder('markdown');
@@ -67,10 +141,12 @@ export default function DownloadPage() {
 
     // Add each result in all formats
     results.forEach((result) => {
-      const fileName = result.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+      const mdFileName = generateFilename(result.name, 'md').replace('.md', '');
+      const txtFileName = generateFilename(result.name, 'txt').replace('.txt', '');
+      const jsonFileName = generateFilename(result.name, 'json').replace('.json', '');
 
       // Markdown format (original)
-      markdownFolder?.file(`${fileName}.md`, result.result);
+      markdownFolder?.file(`${mdFileName}.md`, result.result);
 
       // Plain text format (strip markdown formatting)
       const plainText = result.result
@@ -79,7 +155,7 @@ export default function DownloadPage() {
         .replace(/\*(.*?)\*/g, '$1') // Remove italic
         .replace(/`(.*?)`/g, '$1') // Remove code blocks
         .replace(/\[(.*?)\]\(.*?\)/g, '$1'); // Remove links
-      textFolder?.file(`${fileName}.txt`, plainText);
+      textFolder?.file(`${txtFileName}.txt`, plainText);
 
       // JSON format (structured)
       const jsonData = {
@@ -88,7 +164,7 @@ export default function DownloadPage() {
         generated_at: new Date().toISOString(),
         format: 'markdown',
       };
-      jsonFolder?.file(`${fileName}.json`, JSON.stringify(jsonData, null, 2));
+      jsonFolder?.file(`${jsonFileName}.json`, JSON.stringify(jsonData, null, 2));
     });
 
     // Create a summary JSON with all results

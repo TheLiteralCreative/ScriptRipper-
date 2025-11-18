@@ -81,6 +81,7 @@ export const analysisApi = {
     tasks: Array<{ task_name: string; prompt: string }>;
     provider?: string;
     model?: string;
+    metadata?: any;
   }) => {
     const response = await api.post('/analyze/batch', {
       transcript: data.transcript,
@@ -88,6 +89,7 @@ export const analysisApi = {
       tasks: data.tasks,
       provider: data.provider || 'gemini',
       model: data.model || 'models/gemini-2.5-flash',
+      metadata: data.metadata,
     });
     return response.data;
   },
