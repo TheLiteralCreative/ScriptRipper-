@@ -106,7 +106,7 @@ export default function ConfigurePage() {
       }
     };
 
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       fetchPrompts();
     }
   }, [currentStep]);
@@ -150,10 +150,6 @@ export default function ConfigurePage() {
     if (participantCount > 0) {
       setCurrentStep(2);
     }
-  };
-
-  const handleStep2Continue = () => {
-    setCurrentStep(3);
   };
 
   const handleBack = () => {
@@ -229,23 +225,23 @@ export default function ConfigurePage() {
             Configure Your Analysis
           </h1>
           <p className="text-lg font-light text-gray-600">
-            Step {currentStep} of 3
+            Step {currentStep} of 2
           </p>
         </motion.div>
 
         {/* Progress Indicators */}
         <div className="mb-8 flex items-center justify-center gap-2">
-          {[1, 2, 3].map((step) => (
+          {[1, 2].map((step) => (
             <div
               key={step}
-              className={`h-2 w-20 rounded-full transition-all ${
+              className={`h-2 w-32 rounded-full transition-all ${
                 step <= currentStep ? 'bg-gray-900' : 'bg-gray-200'
               }`}
             />
           ))}
         </div>
 
-        {/* Step 1: Participant Count & Type */}
+        {/* Step 1: Participant Information & Metadata (Combined) */}
         {currentStep === 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -255,53 +251,48 @@ export default function ConfigurePage() {
             <Card className="mb-8 border-gray-200 shadow-sm">
               <CardHeader className="space-y-1 pb-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-5 w-5 text-gray-900" />
+                  <FileText className="h-5 w-5 text-gray-900" />
                   <CardTitle className="text-2xl font-semibold tracking-tight">
-                    Step 1: Participant Information
+                    Step 1: Transcript Information
                   </CardTitle>
                 </div>
                 <CardDescription className="text-base">
-                  Tell us about the speakers or participants in this transcript
+                  Tell us about this transcript (metadata helps with organization and file naming)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Participant Count and Type - Centered Side by Side */}
-                <div className="flex justify-center">
-                  <div className="flex items-end gap-4">
-                    {/* Number of Participants */}
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-900">
-                        Number of Participants
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={participantCount}
-                        onChange={(e) => setParticipantCount(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-24 rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                        placeholder="1"
-                      />
-                    </div>
+                {/* Number of Participants */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-900">
+                    Number of Participants
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={participantCount}
+                    onChange={(e) => setParticipantCount(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                    placeholder="e.g., 1, 2, 5..."
+                  />
+                </div>
 
-                    {/* Type of Content - Dropdown */}
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-900">
-                        Type of Content
-                      </label>
-                      <select
-                        value={participantType}
-                        onChange={(e) => setParticipantType(e.target.value as any)}
-                        className="w-64 rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
-                      >
-                        <option value="solo">Solo (single speaker)</option>
-                        <option value="interview">Interview (one-on-one)</option>
-                        <option value="group">Group (team meeting)</option>
-                        <option value="panel">Panel (discussion/roundtable)</option>
-                        <option value="other">Other (custom type)</option>
-                      </select>
-                    </div>
-                  </div>
+                {/* Type of Content */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-900">
+                    Type of Content
+                  </label>
+                  <select
+                    value={participantType}
+                    onChange={(e) => setParticipantType(e.target.value as any)}
+                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+                  >
+                    <option value="solo">Solo (single speaker)</option>
+                    <option value="interview">Interview (one-on-one)</option>
+                    <option value="group">Group (team meeting)</option>
+                    <option value="panel">Panel (discussion/roundtable)</option>
+                    <option value="other">Other (custom type)</option>
+                  </select>
                 </div>
 
                 {/* Custom Type Input */}
@@ -323,45 +314,14 @@ export default function ConfigurePage() {
                     />
                   </motion.div>
                 )}
-              </CardContent>
-            </Card>
 
-            {/* Continue Button */}
-            <div className="flex justify-end">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  onClick={handleStep1Continue}
-                  disabled={participantCount < 1 || (participantType === 'other' && !customType.trim())}
-                  size="lg"
-                  className="bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
-                >
-                  Continue to Metadata →
-                </Button>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Step 2: Metadata Form */}
-        {currentStep === 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="mb-8 border-gray-200 shadow-sm">
-              <CardHeader className="space-y-1 pb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-5 w-5 text-gray-900" />
-                  <CardTitle className="text-2xl font-semibold tracking-tight">
-                    Step 2: Add Metadata
-                  </CardTitle>
+                {/* Divider */}
+                <div className="border-t border-gray-200 pt-6">
+                  <p className="mb-4 text-sm font-medium text-gray-700">
+                    Additional Details <span className="text-gray-500 font-normal">(optional)</span>
+                  </p>
                 </div>
-                <CardDescription className="text-base">
-                  Optional but recommended - helps with organization and file naming
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+
                 {/* Title */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-900">
@@ -419,9 +379,10 @@ export default function ConfigurePage() {
             <div className="flex justify-end">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
-                  onClick={handleStep2Continue}
+                  onClick={handleStep1Continue}
+                  disabled={participantCount < 1 || (participantType === 'other' && !customType.trim())}
                   size="lg"
-                  className="bg-gray-900 text-white hover:bg-gray-800"
+                  className="bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400"
                 >
                   Continue to Prompts →
                 </Button>
@@ -430,8 +391,8 @@ export default function ConfigurePage() {
           </motion.div>
         )}
 
-        {/* Step 3: Prompt Selection */}
-        {currentStep === 3 && (
+        {/* Step 2: Prompt Selection */}
+        {currentStep === 2 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -442,7 +403,7 @@ export default function ConfigurePage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="h-5 w-5 text-gray-900" />
                   <CardTitle className="text-2xl font-semibold tracking-tight">
-                    Step 3: Select Analysis Tasks
+                    Step 2: Select Analysis Tasks
                   </CardTitle>
                 </div>
                 <CardDescription className="text-base">
