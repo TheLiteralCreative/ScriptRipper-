@@ -17,6 +17,7 @@ from app.services.llm import LLMProviderFactory
 from app.utils.dependencies import get_current_user
 from app.utils.rate_limit import can_user_rip, record_rip
 from app.utils.logger import setup_logger
+from app.utils.metadata import generate_header
 
 logger = setup_logger(__name__)
 settings = get_settings()
@@ -240,6 +241,9 @@ async def analyze_batch(
             model=request.model,
         )
 
+        # Generate header from metadata (if provided)
+        header = generate_header(request.metadata)
+
         results = []
         total_input = 0
         total_output = 0
@@ -262,10 +266,13 @@ async def analyze_batch(
             total_output += response.output_tokens
             total_cost += response.cost or 0.0
 
+            # Prepend header to result (if metadata exists)
+            result_with_header = f"{header}\n{response.content}" if header else response.content
+
             results.append(
                 TaskResult(
                     task_name=task.task_name,
-                    result=response.content,
+                    result=result_with_header,
                     input_tokens=response.input_tokens,
                     output_tokens=response.output_tokens,
                     cost=response.cost or 0.0,
