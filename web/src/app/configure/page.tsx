@@ -265,40 +265,42 @@ export default function ConfigurePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Participant Count and Type - Side by Side */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  {/* Number of Participants */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-900">
-                      Number of Participants
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={participantCount}
-                      onChange={(e) => setParticipantCount(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                      placeholder="e.g., 1, 2, 5..."
-                    />
-                  </div>
+                {/* Participant Count and Type - Centered Side by Side */}
+                <div className="flex justify-center">
+                  <div className="flex items-end gap-4">
+                    {/* Number of Participants */}
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-900">
+                        Number of Participants
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={participantCount}
+                        onChange={(e) => setParticipantCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-24 rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                        placeholder="1"
+                      />
+                    </div>
 
-                  {/* Type of Content - Dropdown */}
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-900">
-                      Type of Content
-                    </label>
-                    <select
-                      value={participantType}
-                      onChange={(e) => setParticipantType(e.target.value as any)}
-                      className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
-                    >
-                      <option value="solo">Solo (single speaker)</option>
-                      <option value="interview">Interview (one-on-one)</option>
-                      <option value="group">Group (team meeting)</option>
-                      <option value="panel">Panel (discussion/roundtable)</option>
-                      <option value="other">Other (custom type)</option>
-                    </select>
+                    {/* Type of Content - Dropdown */}
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-900">
+                        Type of Content
+                      </label>
+                      <select
+                        value={participantType}
+                        onChange={(e) => setParticipantType(e.target.value as any)}
+                        className="w-64 rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+                      >
+                        <option value="solo">Solo (single speaker)</option>
+                        <option value="interview">Interview (one-on-one)</option>
+                        <option value="group">Group (team meeting)</option>
+                        <option value="panel">Panel (discussion/roundtable)</option>
+                        <option value="other">Other (custom type)</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
