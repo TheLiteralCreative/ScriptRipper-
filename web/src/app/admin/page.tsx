@@ -154,6 +154,12 @@ export default function AdminDashboard() {
             >
               Manage Prompts
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/admin/users')}
+            >
+              Manage Users
+            </Button>
             <Button onClick={() => router.push('/')}>Back to Home</Button>
           </div>
         </div>
