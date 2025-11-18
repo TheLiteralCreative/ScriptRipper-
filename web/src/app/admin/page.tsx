@@ -21,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { adminApi } from '@/lib/api';
+import { UserDetailModal } from '@/components/admin/UserDetailModal';
 
 interface UserStats {
   id: string;
@@ -28,6 +29,8 @@ interface UserStats {
   display_name: string | null;
   role: string;
   subscription_tier: string;
+  subscription_source: string;
+  stripe_customer_id: string | null;
   is_active: boolean;
   created_at: string;
   total_rips: number;
@@ -47,6 +50,8 @@ export default function AdminDashboard() {
   const [tierFilter, setTierFilter] = useState<'all' | 'free' | 'pro' | 'premium'>(
     'all'
   );
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -108,6 +113,34 @@ export default function AdminDashboard() {
     }
   };
 
+  const getSourceBadgeColor = (source: string) => {
+    switch (source) {
+      case 'stripe':
+        return 'bg-green-100 text-green-800';
+      case 'admin':
+        return 'bg-orange-100 text-orange-800';
+      case 'promotional':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const formatSource = (source: string) => {
+    switch (source) {
+      case 'stripe':
+        return 'Stripe';
+      case 'admin':
+        return 'Admin Grant';
+      case 'promotional':
+        return 'Promo';
+      case 'none':
+        return '—';
+      default:
+        return source;
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -124,6 +157,16 @@ export default function AdminDashboard() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleUserClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsUserDetailOpen(true);
+  };
+
+  const handleCloseUserDetail = () => {
+    setIsUserDetailOpen(false);
+    setSelectedUserId(null);
   };
 
   // Calculate summary stats
@@ -303,6 +346,7 @@ export default function AdminDashboard() {
                         <TableHead>Email</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Tier</TableHead>
+                        <TableHead>Source</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead className="text-right">Total Rips</TableHead>
                         <TableHead className="text-right">Today</TableHead>
@@ -314,7 +358,11 @@ export default function AdminDashboard() {
                     </TableHeader>
                     <TableBody>
                       {filteredUsers.map((user) => (
-                        <TableRow key={user.id}>
+                        <TableRow
+                          key={user.id}
+                          onClick={() => handleUserClick(user.id)}
+                          className="cursor-pointer hover:bg-gray-50 transition-colors"
+                        >
                           <TableCell className="font-medium">
                             {user.email}
                           </TableCell>
@@ -328,6 +376,15 @@ export default function AdminDashboard() {
                               )}`}
                             >
                               {user.subscription_tier}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getSourceBadgeColor(
+                                user.subscription_source
+                              )}`}
+                            >
+                              {formatSource(user.subscription_source)}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -366,6 +423,13 @@ export default function AdminDashboard() {
             </Card>
           </>
         )}
+
+        {/* User Detail Modal */}
+        <UserDetailModal
+          userId={selectedUserId}
+          isOpen={isUserDetailOpen}
+          onClose={handleCloseUserDetail}
+        />
       </div>
     </div>
   );

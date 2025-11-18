@@ -78,6 +78,65 @@ Agent: [Checks all platforms, identifies issues, provides action plan]
 
 ---
 
+### 5. `/database-oversight`
+**Purpose:** Monitor and manage database health, connections, and data integrity
+
+**Use when you need to:**
+- Check database connectivity and health
+- Monitor connection pool status
+- Verify data integrity (duplicates, orphans, nulls)
+- Manage database migrations
+- Review database performance
+- Clean up stale data
+- Verify backup status
+
+**Example:**
+```
+User: /database-oversight
+Agent: [Checks database health, finds duplicates, reviews migrations, reports status]
+```
+
+---
+
+### 6. `/auth-oversight`
+**Purpose:** Monitor authentication, tokens, permissions, and security
+
+**Use when you need to:**
+- Test login/logout flows
+- Verify token generation and validation
+- Check CORS configuration
+- Debug authentication failures
+- Review session management
+- Audit OAuth integration
+- Check for security vulnerabilities
+
+**Example:**
+```
+User: /auth-oversight
+Agent: [Tests auth endpoints, validates tokens, checks CORS, reports security status]
+```
+
+---
+
+### 7. `/admin-oversight`
+**Purpose:** Monitor admin access, privileges, and security
+
+**Use when you need to:**
+- Audit admin users
+- Verify admin endpoints are protected
+- Check for privilege escalation vulnerabilities
+- Review admin action logs
+- Test permission boundaries
+- Ensure proper admin security
+
+**Example:**
+```
+User: /admin-oversight
+Agent: [Lists admins, tests endpoints, checks for vulnerabilities, reports security status]
+```
+
+---
+
 ## How These Agents Work
 
 **Slash commands** are stored in `.md` files in this directory. When you type a slash command like `/render-oversight`, Claude Code:
@@ -156,6 +215,9 @@ cp .claude/commands/render-oversight.md /path/to/new-project/.claude/commands/
 cp .claude/commands/vercel-oversight.md /path/to/new-project/.claude/commands/
 cp .claude/commands/godaddy-dns.md /path/to/new-project/.claude/commands/
 cp .claude/commands/dns-orchestrator.md /path/to/new-project/.claude/commands/
+cp .claude/commands/database-oversight.md /path/to/new-project/.claude/commands/
+cp .claude/commands/auth-oversight.md /path/to/new-project/.claude/commands/
+cp .claude/commands/admin-oversight.md /path/to/new-project/.claude/commands/
 ```
 
 **That's it! No customization needed.**

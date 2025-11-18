@@ -8,7 +8,7 @@ from sqlalchemy import select, func, desc
 from pydantic import BaseModel
 
 from app.config.database import get_db
-from app.models.user import User, UserRole, SubscriptionTier
+from app.models.user import User, UserRole, SubscriptionTier, SubscriptionSource
 from app.models.usage import Usage
 from app.models.prompt import Prompt
 from app.utils.dependencies import get_current_user
@@ -46,6 +46,8 @@ class UserStats(BaseModel):
     display_name: str | None
     role: str
     subscription_tier: str
+    subscription_source: str
+    stripe_customer_id: str | None
     is_active: bool
     created_at: datetime
     total_rips: int
@@ -156,6 +158,8 @@ async def list_users(
                 display_name=user.display_name,
                 role=user.role.value,
                 subscription_tier=user.subscription_tier.value,
+                subscription_source=user.subscription_source.value,
+                stripe_customer_id=user.stripe_customer_id,
                 is_active=user.is_active,
                 created_at=user.created_at,
                 total_rips=total_rips,
@@ -253,7 +257,7 @@ async def set_user_pro(
     admin: User = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db),
 ) -> SetProResponse:
-    """Promote a user to the Pro subscription tier by email."""
+    """Promote a user to the Pro subscription tier by email (admin grant)."""
     result = await db.execute(
         select(User).where(func.lower(User.email) == func.lower(request.email))
     )
@@ -266,6 +270,7 @@ async def set_user_pro(
         )
 
     user.subscription_tier = SubscriptionTier.PRO
+    user.subscription_source = SubscriptionSource.ADMIN  # Mark as admin-granted
     await db.commit()
     await db.refresh(user)
 
@@ -484,3 +489,124 @@ async def delete_prompt(
     await db.commit()
 
     return {"message": "Prompt deleted successfully"}
+
+
+# Subscription management schemas
+class UpdateSubscriptionTierRequest(BaseModel):
+    """Request to update a user's subscription tier."""
+
+    tier: str  # 'free', 'pro', or 'premium'
+
+
+class SubscriptionInfo(BaseModel):
+    """Subscription information for a user."""
+
+    user_id: str
+    email: str
+    current_tier: str
+    stripe_customer_id: str | None
+    has_stripe_subscription: bool
+
+
+@router.post("/users/{user_id}/subscription-tier", response_model=SubscriptionInfo)
+async def update_user_subscription_tier(
+    user_id: str,
+    request: UpdateSubscriptionTierRequest,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> SubscriptionInfo:
+    """Update a user's subscription tier (admin-only).
+
+    Args:
+        user_id: User UUID
+        request: Subscription tier update request
+        admin: Admin user
+        db: Database session
+
+    Returns:
+        Updated subscription info
+
+    Raises:
+        404: User not found
+        400: Invalid subscription tier
+    """
+    # Validate tier
+    valid_tiers = ["free", "pro", "premium"]
+    if request.tier not in valid_tiers:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tier. Must be one of: {', '.join(valid_tiers)}",
+        )
+
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Update tier
+    if request.tier == "free":
+        user.subscription_tier = SubscriptionTier.FREE
+    elif request.tier == "pro":
+        user.subscription_tier = SubscriptionTier.PRO
+    elif request.tier == "premium":
+        user.subscription_tier = SubscriptionTier.PREMIUM
+
+    await db.commit()
+    await db.refresh(user)
+
+    # Check if user has Stripe subscription
+    has_stripe = hasattr(user, 'stripe_customer_id') and user.stripe_customer_id is not None
+
+    return SubscriptionInfo(
+        user_id=str(user.id),
+        email=user.email,
+        current_tier=user.subscription_tier.value,
+        stripe_customer_id=user.stripe_customer_id if hasattr(user, 'stripe_customer_id') else None,
+        has_stripe_subscription=has_stripe,
+    )
+
+
+@router.get("/users/{user_id}/subscription", response_model=SubscriptionInfo)
+async def get_user_subscription(
+    user_id: str,
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> SubscriptionInfo:
+    """Get subscription information for a user (admin-only).
+
+    Args:
+        user_id: User UUID
+        admin: Admin user
+        db: Database session
+
+    Returns:
+        Subscription info
+
+    Raises:
+        404: User not found
+    """
+    # Get user
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Check if user has Stripe subscription
+    has_stripe = hasattr(user, 'stripe_customer_id') and user.stripe_customer_id is not None
+
+    return SubscriptionInfo(
+        user_id=str(user.id),
+        email=user.email,
+        current_tier=user.subscription_tier.value,
+        stripe_customer_id=user.stripe_customer_id if hasattr(user, 'stripe_customer_id') else None,
+        has_stripe_subscription=has_stripe,
+    )

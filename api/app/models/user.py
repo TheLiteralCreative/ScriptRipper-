@@ -25,6 +25,15 @@ class SubscriptionTier(str, enum.Enum):
     PREMIUM = "premium"
 
 
+class SubscriptionSource(str, enum.Enum):
+    """Source of subscription tier grant."""
+
+    NONE = "none"  # Free tier, no subscription
+    STRIPE = "stripe"  # Paid via Stripe
+    ADMIN = "admin"  # Granted by admin
+    PROMOTIONAL = "promotional"  # Promotional/trial access
+
+
 class User(Base, TimestampMixin):
     """User model for authentication and authorization."""
 
@@ -42,6 +51,7 @@ class User(Base, TimestampMixin):
         index=True,
     )
     name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    display_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     hashed_password: Mapped[Optional[str]] = mapped_column(
         String(255),
         nullable=True,  # Nullable for OAuth users
@@ -56,6 +66,20 @@ class User(Base, TimestampMixin):
         SQLEnum(SubscriptionTier, name="subscription_tier", create_type=False, values_callable=lambda x: [e.value for e in x]),
         nullable=False,
         default=SubscriptionTier.FREE,
+    )
+    subscription_source: Mapped[SubscriptionSource] = mapped_column(
+        SQLEnum(SubscriptionSource, name="subscription_source", create_type=False, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=SubscriptionSource.NONE,
+    )
+    stripe_customer_id: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        index=True,
+    )
+    stripe_subscription_id: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
     )
     oauth_provider: Mapped[Optional[str]] = mapped_column(
         String(50),

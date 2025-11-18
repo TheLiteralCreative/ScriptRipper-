@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.database import get_db
 from app.config.settings import get_settings
-from app.models.user import User, SubscriptionTier
+from app.models.user import User, SubscriptionTier, SubscriptionSource
 from app.utils.dependencies import get_current_user
 
 router = APIRouter()
@@ -187,9 +187,9 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
             if user:
                 user.subscription_tier = SubscriptionTier.PRO
-                # Store Stripe customer ID if available
-                if hasattr(user, 'stripe_customer_id'):
-                    user.stripe_customer_id = session.get("customer")
+                user.subscription_source = SubscriptionSource.STRIPE  # Mark as Stripe payment
+                user.stripe_customer_id = session.get("customer")
+                user.stripe_subscription_id = session.get("subscription")
                 await db.commit()
 
     elif event["type"] == "customer.subscription.deleted":
@@ -205,6 +205,7 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
             if user:
                 user.subscription_tier = SubscriptionTier.FREE
+                user.subscription_source = SubscriptionSource.NONE
                 await db.commit()
 
     elif event["type"] == "customer.subscription.updated":
@@ -220,9 +221,11 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
             if user and subscription.get("status") == "active":
                 user.subscription_tier = SubscriptionTier.PRO
+                user.subscription_source = SubscriptionSource.STRIPE
                 await db.commit()
             elif user and subscription.get("status") in ["canceled", "unpaid", "past_due"]:
                 user.subscription_tier = SubscriptionTier.FREE
+                user.subscription_source = SubscriptionSource.NONE
                 await db.commit()
 
     return {"status": "success"}
