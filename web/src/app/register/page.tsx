@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,27 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingMessage, setLoadingMessage] = useState('Creating account...');
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
+
+  // Progressive loading messages based on elapsed time
+  useEffect(() => {
+    if (!isLoading || loadingStartTime === null) return;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - loadingStartTime;
+
+      if (elapsed < 2000) {
+        setLoadingMessage('Creating account...');
+      } else if (elapsed < 5000) {
+        setLoadingMessage('Connecting to server...');
+      } else {
+        setLoadingMessage('Waking up server... (first time may take 30-60 seconds)');
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isLoading, loadingStartTime]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +61,8 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
+    setLoadingStartTime(Date.now());
+    setLoadingMessage('Creating account...');
 
     try {
       const response = await authApi.register(email, password, name || undefined);
@@ -55,6 +78,7 @@ export default function RegisterPage() {
       setError(err.response?.data?.detail || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
+      setLoadingStartTime(null);
     }
   };
 
@@ -185,6 +209,14 @@ export default function RegisterPage() {
                   </div>
                 )}
 
+                {/* Loading Message */}
+                {isLoading && (
+                  <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-800 flex items-center gap-3">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>{loadingMessage}</span>
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
@@ -192,7 +224,14 @@ export default function RegisterPage() {
                   className="w-full bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 transition-all"
                   size="lg"
                 >
-                  {isLoading ? 'Creating account...' : 'Create Account →'}
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Please wait...
+                    </span>
+                  ) : (
+                    'Create Account →'
+                  )}
                 </Button>
               </form>
 
