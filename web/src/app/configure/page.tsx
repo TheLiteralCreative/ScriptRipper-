@@ -265,58 +265,40 @@ export default function ConfigurePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Participant Count */}
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900">
-                    Number of Participants/Speakers
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={participantCount}
-                    onChange={(e) => setParticipantCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                  />
-                </div>
+                {/* Participant Count and Type - Side by Side */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Number of Participants */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Number of Participants
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={participantCount}
+                      onChange={(e) => setParticipantCount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                      placeholder="e.g., 1, 2, 5..."
+                    />
+                  </div>
 
-                {/* Participant Type */}
-                <div>
-                  <label className="mb-3 block text-sm font-medium text-gray-900">
-                    Type of Content
-                  </label>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {[
-                      { value: 'solo', label: 'Solo', desc: 'Single speaker (speech, tutorial, etc.)' },
-                      { value: 'interview', label: 'Interview', desc: 'One-on-one conversation' },
-                      { value: 'group', label: 'Group', desc: 'Team meeting or group discussion' },
-                      { value: 'panel', label: 'Panel', desc: 'Panel discussion or roundtable' },
-                      { value: 'other', label: 'Other', desc: 'Custom type (specify below)' },
-                    ].map((type) => (
-                      <motion.button
-                        key={type.value}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setParticipantType(type.value as any)}
-                        className={`rounded-xl border-2 p-4 text-left transition-all ${
-                          participantType === type.value
-                            ? 'border-gray-900 bg-gray-50'
-                            : 'border-gray-200 hover:border-gray-400'
-                        }`}
-                      >
-                        <div className="mb-1 flex items-start justify-between">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {type.label}
-                          </span>
-                          {participantType === type.value && (
-                            <Check className="h-4 w-4 flex-shrink-0 text-gray-900" />
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          {type.desc}
-                        </p>
-                      </motion.button>
-                    ))}
+                  {/* Type of Content - Dropdown */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Type of Content
+                    </label>
+                    <select
+                      value={participantType}
+                      onChange={(e) => setParticipantType(e.target.value as any)}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+                    >
+                      <option value="solo">Solo (single speaker)</option>
+                      <option value="interview">Interview (one-on-one)</option>
+                      <option value="group">Group (team meeting)</option>
+                      <option value="panel">Panel (discussion/roundtable)</option>
+                      <option value="other">Other (custom type)</option>
+                    </select>
                   </div>
                 </div>
 
