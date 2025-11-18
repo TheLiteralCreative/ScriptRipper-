@@ -122,7 +122,8 @@ export const adminApi = {
 
   createPrompt: async (data: {
     task_name: string;
-    prompt: string;
+    description: string;
+    prompt_json: string;
     category: string;
   }) => {
     const response = await api.post('/admin/prompts', data);
@@ -133,7 +134,8 @@ export const adminApi = {
     promptId: string,
     data: {
       task_name?: string;
-      prompt?: string;
+      description?: string;
+      prompt_json?: string;
       category?: string;
       is_active?: boolean;
     }
