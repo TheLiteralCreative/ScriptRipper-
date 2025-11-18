@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Check, Zap, Sparkles } from 'lucide-react';
 import { billingApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,16 @@ export default function UpgradePage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Return to Home Link */}
+        <div className="mb-8">
+          <Link
+            href="/"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors inline-flex items-center gap-1"
+          >
+            ← Home
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-12 text-center">
           <div className="mb-4 flex items-center justify-center">

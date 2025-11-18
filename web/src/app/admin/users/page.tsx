@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, ArrowLeft } from 'lucide-react';
+import { Users, ArrowLeft, Home } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import {
@@ -110,6 +110,12 @@ export default function AdminUsersPage() {
               <Button variant="outline" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Dashboard
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="outline" className="gap-2">
+                <Home className="h-4 w-4" />
+                Home
               </Button>
             </Link>
             <Button onClick={loadUsers} disabled={loading}>

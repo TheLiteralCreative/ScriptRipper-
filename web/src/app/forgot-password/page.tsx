@@ -43,6 +43,16 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
+      {/* Return to Home Link */}
+      <div className="absolute left-4 top-4 sm:left-8 sm:top-8">
+        <Link
+          href="/"
+          className="text-sm text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1"
+        >
+          ← Home
+        </Link>
+      </div>
+
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center animate-in">

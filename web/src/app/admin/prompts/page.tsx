@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, ArrowLeft, Check, X } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Edit, Trash2, ArrowLeft, Check, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,7 +17,9 @@ import { adminApi } from '@/lib/api';
 interface Prompt {
   id: string;
   task_name: string;
-  prompt: string;
+  prompt: string;  // Legacy field
+  description: string;  // User-facing description
+  prompt_json: string;  // Actual JSON prompt for processing
   category: string;
   is_active: boolean;
   created_at: string;
@@ -35,7 +38,8 @@ export default function PromptsManagement() {
   // Form state
   const [formData, setFormData] = useState({
     task_name: '',
-    prompt: '',
+    description: '',
+    prompt_json: '',
     category: 'meetings',
   });
 
@@ -65,7 +69,7 @@ export default function PromptsManagement() {
     try {
       await adminApi.createPrompt(formData);
       setShowAddForm(false);
-      setFormData({ task_name: '', prompt: '', category: 'meetings' });
+      setFormData({ task_name: '', description: '', prompt_json: '', category: 'meetings' });
       loadPrompts();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to create prompt');
@@ -78,7 +82,7 @@ export default function PromptsManagement() {
     try {
       await adminApi.updatePrompt(editingPrompt.id, formData);
       setEditingPrompt(null);
-      setFormData({ task_name: '', prompt: '', category: 'meetings' });
+      setFormData({ task_name: '', description: '', prompt_json: '', category: 'meetings' });
       loadPrompts();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to update prompt');
@@ -109,7 +113,8 @@ export default function PromptsManagement() {
     setEditingPrompt(prompt);
     setFormData({
       task_name: prompt.task_name,
-      prompt: prompt.prompt,
+      description: prompt.description,
+      prompt_json: prompt.prompt_json,
       category: prompt.category,
     });
     setShowAddForm(false);
@@ -118,7 +123,7 @@ export default function PromptsManagement() {
   const cancelEdit = () => {
     setEditingPrompt(null);
     setShowAddForm(false);
-    setFormData({ task_name: '', prompt: '', category: 'meetings' });
+    setFormData({ task_name: '', description: '', prompt_json: '', category: 'meetings' });
   };
 
   const filteredPrompts =
@@ -132,14 +137,21 @@ export default function PromptsManagement() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/admin')}
-              className="mb-4"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
-            </Button>
+            <div className="mb-4 flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/admin')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Dashboard
+              </Button>
+              <Link href="/">
+                <Button variant="ghost">
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+                </Button>
+              </Link>
+            </div>
             <h1 className="mb-2 text-4xl font-bold text-gray-900">
               Prompt Bank Management
             </h1>
@@ -151,7 +163,7 @@ export default function PromptsManagement() {
             onClick={() => {
               setShowAddForm(true);
               setEditingPrompt(null);
-              setFormData({ task_name: '', prompt: '', category: 'meetings' });
+              setFormData({ task_name: '', description: '', prompt_json: '', category: 'meetings' });
             }}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -228,26 +240,50 @@ export default function PromptsManagement() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prompt
-                  </label>
-                  <textarea
-                    value={formData.prompt}
-                    onChange={(e) =>
-                      setFormData({ ...formData, prompt: e.target.value })
-                    }
-                    className="w-full rounded-md border border-gray-300 p-2"
-                    rows={8}
-                    placeholder="Enter the analysis prompt..."
-                  />
+                {/* Side-by-side Description and JSON Prompt */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (User-Facing)
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      className="w-full rounded-md border border-gray-300 p-2"
+                      rows={10}
+                      placeholder="Natural language description shown to users..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      This is what users see when selecting prompts
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      JSON Prompt (Processing)
+                    </label>
+                    <textarea
+                      value={formData.prompt_json}
+                      onChange={(e) =>
+                        setFormData({ ...formData, prompt_json: e.target.value })
+                      }
+                      className="w-full rounded-md border border-gray-300 p-2"
+                      rows={10}
+                      placeholder="Actual prompt sent to the LLM for processing..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      This is the actual prompt used for analysis
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
                   <Button
                     onClick={editingPrompt ? handleUpdate : handleCreate}
                     disabled={
-                      !formData.task_name || !formData.prompt || !formData.category
+                      !formData.task_name || !formData.description || !formData.prompt_json || !formData.category
                     }
                   >
                     {editingPrompt ? 'Update' : 'Create'}
@@ -303,9 +339,24 @@ export default function PromptsManagement() {
                           )}
                         </button>
                       </div>
-                      <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                        {prompt.prompt}
-                      </p>
+                      <div className="grid grid-cols-2 gap-4 mt-3">
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 mb-1">
+                            DESCRIPTION (User-Facing)
+                          </h4>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {prompt.description}
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 mb-1">
+                            JSON PROMPT (Processing)
+                          </h4>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {prompt.prompt_json}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2 ml-4">
                       <Button

@@ -287,7 +287,9 @@ class PromptResponse(BaseModel):
 
     id: str
     task_name: str
-    prompt: str
+    prompt: str  # Legacy field
+    description: str
+    prompt_json: str
     category: str
     is_active: bool
     created_at: datetime
@@ -298,7 +300,8 @@ class CreatePromptRequest(BaseModel):
     """Create prompt request schema."""
 
     task_name: str
-    prompt: str
+    description: str
+    prompt_json: str
     category: str  # 'meetings' or 'presentations'
 
 
@@ -306,7 +309,8 @@ class UpdatePromptRequest(BaseModel):
     """Update prompt request schema."""
 
     task_name: str | None = None
-    prompt: str | None = None
+    description: str | None = None
+    prompt_json: str | None = None
     category: str | None = None
     is_active: bool | None = None
 
@@ -339,7 +343,9 @@ async def list_prompts(
         PromptResponse(
             id=str(prompt.id),
             task_name=prompt.task_name,
-            prompt=prompt.prompt,
+            prompt=prompt.prompt,  # Legacy field
+            description=prompt.description,
+            prompt_json=prompt.prompt_json,
             category=prompt.category,
             is_active=prompt.is_active,
             created_at=prompt.created_at,
@@ -377,7 +383,9 @@ async def create_prompt(
 
     prompt = Prompt(
         task_name=request.task_name,
-        prompt=request.prompt,
+        prompt=request.prompt_json,  # Legacy field gets prompt_json value for backward compatibility
+        description=request.description,
+        prompt_json=request.prompt_json,
         category=request.category,
     )
 
@@ -388,7 +396,9 @@ async def create_prompt(
     return PromptResponse(
         id=str(prompt.id),
         task_name=prompt.task_name,
-        prompt=prompt.prompt,
+        prompt=prompt.prompt,  # Legacy field
+        description=prompt.description,
+        prompt_json=prompt.prompt_json,
         category=prompt.category,
         is_active=prompt.is_active,
         created_at=prompt.created_at,
@@ -430,8 +440,11 @@ async def update_prompt(
     # Update fields if provided
     if request.task_name is not None:
         prompt.task_name = request.task_name
-    if request.prompt is not None:
-        prompt.prompt = request.prompt
+    if request.description is not None:
+        prompt.description = request.description
+    if request.prompt_json is not None:
+        prompt.prompt_json = request.prompt_json
+        prompt.prompt = request.prompt_json  # Keep legacy field in sync
     if request.category is not None:
         if request.category not in ["meetings", "presentations"]:
             raise HTTPException(
@@ -449,7 +462,9 @@ async def update_prompt(
     return PromptResponse(
         id=str(prompt.id),
         task_name=prompt.task_name,
-        prompt=prompt.prompt,
+        prompt=prompt.prompt,  # Legacy field
+        description=prompt.description,
+        prompt_json=prompt.prompt_json,
         category=prompt.category,
         is_active=prompt.is_active,
         created_at=prompt.created_at,

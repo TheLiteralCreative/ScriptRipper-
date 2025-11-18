@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Loader2, Download, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, Loader2, Download, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
@@ -157,6 +158,16 @@ export default function ProcessPage() {
     } catch (error: any) {
       console.error('Batch analysis failed:', error);
 
+      // Extract error message from API response
+      let errorMessage = 'Analysis failed';
+      if (error.response?.data?.error?.message) {
+        errorMessage = error.response.data.error.message;
+      } else if (error.response?.data?.detail?.error?.message) {
+        errorMessage = error.response.data.detail.error.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       // Mark all pending/processing tasks as error
       setTasks((prev) =>
         prev.map((task) =>
@@ -164,10 +175,7 @@ export default function ProcessPage() {
             ? {
                 ...task,
                 status: 'error' as const,
-                error:
-                  error.response?.data?.error?.message ||
-                  error.message ||
-                  'Analysis failed',
+                error: errorMessage,
               }
             : task
         )
@@ -199,6 +207,17 @@ export default function ProcessPage() {
       </div>
 
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Return to Home Link */}
+        <div className="mb-8">
+          <Link
+            href="/"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors inline-flex items-center gap-1"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Link>
+        </div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

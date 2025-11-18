@@ -3,7 +3,7 @@
 import { useState, useEffect, type RefCallback, type AnimationEventHandler } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, Sparkles } from 'lucide-react';
+import { Upload, FileText, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,11 +15,15 @@ import {
 } from '@/components/ui/card';
 import { Navbar } from '@/components/navbar';
 
+// Maximum allowed transcript length (matches backend setting)
+const MAX_TRANSCRIPT_LENGTH = 500000; // 500K characters (~125K tokens)
+
 export default function Home() {
   const router = useRouter();
   const [transcript, setTranscript] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -35,6 +39,15 @@ export default function Home() {
         setFileName(file.name);
         const text = await file.text();
         setTranscript(text);
+
+        // Validate length after setting
+        if (text.length > MAX_TRANSCRIPT_LENGTH) {
+          setValidationError(
+            `Transcript is too long (${text.length.toLocaleString()} characters). Maximum allowed is ${MAX_TRANSCRIPT_LENGTH.toLocaleString()} characters.`
+          );
+        } else {
+          setValidationError(null);
+        }
       }
     },
   });
@@ -53,12 +66,34 @@ export default function Home() {
 
   const handleContinue = () => {
     if (transcript.trim()) {
+      // Validate length before continuing
+      if (transcript.length > MAX_TRANSCRIPT_LENGTH) {
+        setValidationError(
+          `Transcript is too long (${transcript.length.toLocaleString()} characters). Maximum allowed is ${MAX_TRANSCRIPT_LENGTH.toLocaleString()} characters.`
+        );
+        return;
+      }
+
       // Store transcript and filename in sessionStorage to pass to next page
       sessionStorage.setItem('transcript', transcript);
       if (fileName) {
         sessionStorage.setItem('originalFileName', fileName);
       }
       router.push('/configure');
+    }
+  };
+
+  // Handle transcript change and validate
+  const handleTranscriptChange = (value: string) => {
+    setTranscript(value);
+
+    // Validate length
+    if (value.length > MAX_TRANSCRIPT_LENGTH) {
+      setValidationError(
+        `Transcript is too long (${value.length.toLocaleString()} characters). Maximum allowed is ${MAX_TRANSCRIPT_LENGTH.toLocaleString()} characters.`
+      );
+    } else {
+      setValidationError(null);
     }
   };
 
@@ -193,23 +228,57 @@ export default function Home() {
                   id="transcript"
                   rows={10}
                   value={transcript}
-                  onChange={(e) => setTranscript(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 p-4 text-sm leading-relaxed transition-all focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                  onChange={(e) => handleTranscriptChange(e.target.value)}
+                  className={`w-full rounded-xl border p-4 text-sm leading-relaxed transition-all focus:outline-none focus:ring-2 ${
+                    validationError
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
+                      : 'border-gray-300 focus:border-gray-900 focus:ring-gray-900/10'
+                  }`}
                   placeholder="Speaker 1: Welcome to the meeting...
 Speaker 2: Thanks for having me..."
                 />
                 <div className="mt-3 flex items-center justify-between">
                   <p className="text-xs text-gray-500">
-                    {transcript.length.toLocaleString()} characters
+                    Maximum {MAX_TRANSCRIPT_LENGTH.toLocaleString()} characters
+                  </p>
+                  <p
+                    className={`text-xs font-medium ${
+                      validationError
+                        ? 'text-red-600'
+                        : transcript.length > MAX_TRANSCRIPT_LENGTH * 0.9
+                          ? 'text-amber-600'
+                          : 'text-gray-500'
+                    }`}
+                  >
+                    {transcript.length.toLocaleString()} / {MAX_TRANSCRIPT_LENGTH.toLocaleString()}
                   </p>
                 </div>
               </div>
+
+              {/* Validation Error */}
+              {validationError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-xl border border-red-200 bg-red-50 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-red-900 mb-1">
+                        Transcript Too Large
+                      </h4>
+                      <p className="text-sm text-red-700">{validationError}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Continue Button */}
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                 <Button
                   onClick={handleContinue}
-                  disabled={!transcript.trim()}
+                  disabled={!transcript.trim() || !!validationError}
                   size="lg"
                   className="w-full bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 transition-all"
                 >

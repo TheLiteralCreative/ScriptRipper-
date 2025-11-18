@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Check, ArrowLeft, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,8 @@ type TranscriptType = 'meetings' | 'presentations' | null;
 
 interface Prompt {
   task_name: string;
-  prompt: string;
+  description: string;  // User-facing description
+  prompt: string;  // JSON prompt for processing (kept for backward compatibility)
 }
 
 export default function ConfigurePage() {
@@ -137,14 +139,15 @@ export default function ConfigurePage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/')}
-            className="mb-8 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Upload
-          </Button>
+          <Link href="/">
+            <Button
+              variant="ghost"
+              className="mb-8 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Home
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Header */}
@@ -277,7 +280,7 @@ export default function ConfigurePage() {
                           : 'border-gray-200 hover:border-gray-400'
                       }`}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between mb-2">
                         <span className="text-sm font-medium text-gray-900">
                           {prompt.task_name}
                         </span>
@@ -285,6 +288,9 @@ export default function ConfigurePage() {
                           <Check className="h-4 w-4 flex-shrink-0 text-gray-900" />
                         )}
                       </div>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        {prompt.description}
+                      </p>
                     </motion.button>
                   ))}
                 </div>

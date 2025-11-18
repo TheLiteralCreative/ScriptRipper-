@@ -18,7 +18,9 @@ class Prompt(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     task_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)  # Legacy field, kept for backward compatibility
+    description: Mapped[str] = mapped_column(Text, nullable=False)  # User-facing description
+    prompt_json: Mapped[str] = mapped_column(Text, nullable=False)  # Actual JSON prompt for processing
     category: Mapped[str] = mapped_column(String(50), nullable=False)  # 'meetings' or 'presentations'
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -33,8 +35,10 @@ class Prompt(Base):
         return {
             "id": str(self.id),
             "task_name": self.task_name,
-            "prompt": self.prompt,
-            "category": self.category.value,
+            "prompt": self.prompt,  # Legacy field
+            "description": self.description,
+            "prompt_json": self.prompt_json,
+            "category": self.category.value if hasattr(self.category, 'value') else self.category,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

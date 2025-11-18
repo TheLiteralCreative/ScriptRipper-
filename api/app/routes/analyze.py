@@ -39,7 +39,7 @@ def validate_transcript_size(transcript: str) -> None:
             detail={
                 "error": {
                     "code": "transcript_too_large",
-                    "message": f"Transcript exceeds maximum length of {settings.MAX_TRANSCRIPT_LENGTH:,} characters (received: {len(transcript):,})",
+                    "message": f"Transcript is too long. Your transcript has {len(transcript):,} characters, but the maximum allowed is {settings.MAX_TRANSCRIPT_LENGTH:,} characters. Please shorten your transcript and try again.",
                     "retryable": False,
                     "max_length": settings.MAX_TRANSCRIPT_LENGTH,
                     "actual_length": len(transcript),
@@ -327,6 +327,11 @@ async def get_prompts(
 
     Returns:
         Dictionary with prompts by category
+
+    Note:
+        Returns 'description' (user-facing text) and 'prompt_json' (actual prompt for processing).
+        Admin-created prompts appear as regular selectable prompts.
+        Only user-submitted ad-hoc prompts are considered "custom prompts".
     """
     query = select(Prompt).where(Prompt.is_active == True).order_by(Prompt.task_name)
 
@@ -337,13 +342,22 @@ async def get_prompts(
     prompts = result.scalars().all()
 
     # Group by category
+    # Return description for display, prompt_json for processing
     meetings_prompts = [
-        {"task_name": p.task_name, "prompt": p.prompt}
+        {
+            "task_name": p.task_name,
+            "description": p.description,  # User-facing description
+            "prompt": p.prompt_json,  # Actual JSON prompt for processing (kept as 'prompt' for backward compatibility)
+        }
         for p in prompts
         if p.category == "meetings"
     ]
     presentations_prompts = [
-        {"task_name": p.task_name, "prompt": p.prompt}
+        {
+            "task_name": p.task_name,
+            "description": p.description,  # User-facing description
+            "prompt": p.prompt_json,  # Actual JSON prompt for processing (kept as 'prompt' for backward compatibility)
+        }
         for p in prompts
         if p.category == "presentations"
     ]
