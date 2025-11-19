@@ -40,7 +40,7 @@ interface PromptDescription {
 // Enhanced prompt descriptions with What/Why/How/Who format
 // Keys must match exact task_name values from the database
 const PROMPT_DESCRIPTIONS: Record<string, PromptDescription> = {
-  'Action Items Table': {
+  'Action Items Tracker': {
     what: 'Finds every concrete to-do with owner, due date, and live status.',
     why: 'Turns talk into accountable work—no loose ends.',
     how: '4-column table (Task, Assigned To, Due Date, Status) with status inferred from context; sorted by due date.',
@@ -49,44 +49,50 @@ const PROMPT_DESCRIPTIONS: Record<string, PromptDescription> = {
   'Key Decisions Log': {
     what: 'Logs every final decision and distills the three biggest implications.',
     why: 'Locks alignment and momentum.',
-    how: 'Numbered decision list with owners → "Top 3 Takeaways" derived only from those decisions.',
+    how: 'Numbered decision list with owners → “Top 3 Takeaways” derived only from those decisions.',
     who: 'Execs/PMs who need crisp outcomes.',
   },
-  'Client-Expectations': {
-    what: "Pulls the client's concrete asks, unspoken relational signals, and emotional tone.",
+  'Client Expectations Report': {
+    what: 'Pulls the client’s concrete asks, unspoken relational signals, and emotional tone.',
     why: 'Prevents misalignment and surprise escalations.',
     how: 'Three sections with justification quotes/examples.',
     who: 'Account managers & consultants.',
   },
-  'Disagreements & Unresolved Issues': {
+  'Friction & Foresight Report': {
     what: 'Flags current disputes and likely flashpoints—each paired with advice.',
     why: 'Defuses risk early.',
     how: 'Two sections, bulleted issues with people + bold Advice.',
     who: 'Facilitators, product leads, client services.',
   },
-  'Key-Insights': {
+  'Communication Insights (SSC)': {
     what: 'Surfaces team dynamics and turns them into a Start–Stop–Continue plan.',
     why: 'Improves collaboration and cuts repeat misfires.',
     how: 'Evidence-backed insights + targeted actions mapped one-to-one.',
     who: 'Team leads, coaches, client managers.',
   },
-  'Full-Record-Markdown': {
+  'Full Record Markdown': {
     what: 'Converts raw transcript into clean, shareable Markdown.',
     why: 'Makes long notes readable and navigable.',
     how: 'H1 + meta + H2 sections by time; speakers/timestamps preserved.',
     who: 'Ops teams, archivists, minute-takers.',
   },
-  'Expanded Outline': {
+  'Timestamped Outline & Recipes': {
     what: 'Full, timestamped outline with optional recipes/CTA/quotes/takeaways.',
     why: 'Lets readers grasp everything fast without the video.',
     how: 'H1 + bold meta; H2 time ranges; dense bullets; recipes table.',
     who: 'Content editors, enablement teams, note-takers.',
   },
-  'Audience-Activation Artifacts': {
+  'Audience Activation Artifacts': {
     what: 'Spins the talk into tweets, social snippets, slide bullets, FAQs, exercises, and more.',
     why: 'Extends reach across channels with zero extra drafting.',
     how: 'Strict headings; platform-ready formats (tweets, Q&A, lists, KPIs).',
     who: 'Creators, marketers, coaches.',
+  },
+  'Tutorial Step-Down & Actionable How-To Extractor': {
+    what: 'Converts tutorials hidden in the talk into step-by-step guides with inputs, parameters, and validation.',
+    why: 'Saves hours turning videos into docs novices can execute.',
+    how: 'One or more blocks with tables, checklists, quotes+timestamps, troubleshooting.',
+    who: 'Educators, dev-tool instructors, enablement.',
   },
   'Important Quotes': {
     what: 'Pulls the 3–5 lines that matter most—word-for-word.',
@@ -100,31 +106,31 @@ const PROMPT_DESCRIPTIONS: Record<string, PromptDescription> = {
     how: 'Clean, alphabetized bullets in a fixed format.',
     who: 'Coordinators, assistants, onboarding users.',
   },
-  'Content_Nuggets': {
+  'Content Nuggets': {
     what: 'Harvests high-value tidbits—tools, stats, steps, frameworks, lessons.',
     why: 'Makes insights portable for docs, posts, and training.',
     how: 'Categorized bullets with a brief context note.',
     who: 'Content ops, enablement, knowledge bases.',
   },
-  'Relationship_Dependency Mapping': {
+  'Relationship & Dependency Map': {
     what: 'Shows how ideas and tools connect and in what order.',
     why: 'Prevents mis-sequencing and clarifies choices.',
     how: 'Dependency statements, comparison tables, references, and roadmaps.',
     who: 'Architects, curriculum designers, strategists.',
   },
-  'Structural_Contextual Metadata': {
+  'Structural & Contextual Metadata': {
     what: 'Builds a complete metadata header for discovery.',
     why: 'Improves search, filtering, and reuse.',
-    how: 'Fixed key-value bullets with "Not available" where missing.',
+    how: 'Fixed key-value bullets with “Not available” where missing.',
     who: 'Librarians, SEO & content ops.',
   },
-  'Quality_and_Credibility_Signals': {
+  'Quality & Credibility Signals': {
     what: 'Scores expertise, evidence style, consensus, and bias.',
     why: 'Reduces risk of amplifying weak or sponsored content.',
     how: 'Bold assessments backed by quotes; flags missing evidence.',
     who: 'Editors, educators, researchers.',
   },
-  'Processing_Health_Check': {
+  'Processing Health Check': {
     what: 'Rates how cleanly the transcript can be mined.',
     why: 'Guides whether to trust outputs or request a redo.',
     how: 'Four brief assessments with justifications.',
@@ -136,35 +142,11 @@ const PROMPT_DESCRIPTIONS: Record<string, PromptDescription> = {
     how: 'Purpose, problems, decisions, outcome in dense prose.',
     who: 'Executives and sponsors.',
   },
-  'Overview-Summary': {
+  'Overview Summary': {
     what: 'Narrative brief from purpose to outcomes.',
     why: 'Gives decision-makers full context without noise.',
     how: 'Multi-paragraph prose covering problems/solutions, debates, and results.',
     who: 'Execs and PMOs.',
-  },
-  'Deep-Outline': {
-    what: 'Creates a detailed hierarchical outline of the conversation.',
-    why: 'Makes complex discussions navigable and structured.',
-    how: 'Nested bullet points organized by topic and subtopic.',
-    who: 'Technical writers, analysts, documentation teams.',
-  },
-  'Next-Steps_and_Project-Update': {
-    what: 'Comprehensive status report with action items and future agenda.',
-    why: 'Keeps projects on track with clear next steps.',
-    how: 'Three sections: status updates, action items table, and future talking points.',
-    who: 'Project coordinators and team leads.',
-  },
-  'Top 3 Takeaways': {
-    what: 'The three most important high-level conclusions.',
-    why: 'Captures core messages for quick sharing.',
-    how: 'Numbered list of concise, impactful statements.',
-    who: 'Content creators and summarizers.',
-  },
-  'Key Terminology & Definitions': {
-    what: 'Glossary of technical terms and jargon explained.',
-    why: 'Helps readers understand specialized language.',
-    how: 'Bulleted list with bold terms and their definitions.',
-    who: 'Researchers and educators.',
   },
 };
 
