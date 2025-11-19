@@ -592,7 +592,27 @@ export default function ConfigurePage() {
                       {availablePrompts.map((prompt, index) => {
                       const isExpanded = expandedPrompts.has(prompt.task_name);
                       const isSelected = selectedPrompts.has(prompt.task_name);
-                      const enhancedDesc = PROMPT_DESCRIPTIONS[prompt.task_name];
+
+                      // Try to get enhanced description from PROMPT_DESCRIPTIONS
+                      let enhancedDesc = PROMPT_DESCRIPTIONS[prompt.task_name];
+
+                      // If not found, try to parse from database description field
+                      if (!enhancedDesc && prompt.description) {
+                        const desc = prompt.description;
+                        const whatMatch = desc.match(/What:\s*([^]*?)(?=\s*Why:)/i);
+                        const whyMatch = desc.match(/Why:\s*([^]*?)(?=\s*How:)/i);
+                        const howMatch = desc.match(/How:\s*([^]*?)(?=\s*Who:)/i);
+                        const whoMatch = desc.match(/Who:\s*([^]*?)$/i);
+
+                        if (whatMatch && whyMatch && howMatch && whoMatch) {
+                          enhancedDesc = {
+                            what: whatMatch[1].trim(),
+                            why: whyMatch[1].trim(),
+                            how: howMatch[1].trim(),
+                            who: whoMatch[1].trim(),
+                          };
+                        }
+                      }
 
                       return (
                         <motion.div
