@@ -85,7 +85,8 @@ dmypy.json
 .ipynb_checkpoints/
 
 # Package managers
-package-lock.json
+# package-lock.json - SHOULD be committed for production deployments
 yarn.lock
 pnpm-lock.yaml
 poetry.lock
+.vercel
