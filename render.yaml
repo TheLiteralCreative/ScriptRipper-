@@ -9,7 +9,7 @@ services:
     name: scriptripper-api
     env: docker
     dockerfilePath: ./api/Dockerfile
-    dockerContext: ./api
+    dockerContext: .
     region: oregon  # Choose: oregon, frankfurt, ohio, singapore
     plan: free  # Upgrade to 'starter' or 'standard' for production
     branch: main

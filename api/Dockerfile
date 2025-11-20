@@ -9,14 +9,20 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt .
+# Copy requirements from api directory
+COPY api/requirements.txt ./api/requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r api/requirements.txt
 
-# Copy application code
-COPY . .
+# Copy API application code (maintains directory structure)
+COPY api/ ./api/
+
+# Copy shared analysis engine (maintains directory structure)
+COPY shared/ ./shared/
+
+# Change to api directory for execution
+WORKDIR /app/api
 
 # Make startup script executable
 RUN chmod +x start.sh
