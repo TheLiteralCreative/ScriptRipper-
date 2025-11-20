@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Navbar } from '@/components/navbar';
+import { extractTextFromFile } from '@/lib/parsers';
 
 // Maximum allowed transcript length (matches backend setting)
 const MAX_TRANSCRIPT_LENGTH = 500000; // 500K characters (~125K tokens)
@@ -28,25 +29,38 @@ export default function Home() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'text/plain': ['.txt'],
+      'text/markdown': ['.md'],
       'application/json': ['.json'],
       'text/vtt': ['.vtt'],
       'application/x-subrip': ['.srt'],
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
     },
     maxFiles: 1,
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
         setFileName(file.name);
-        const text = await file.text();
-        setTranscript(text);
 
-        // Validate length after setting
-        if (text.length > MAX_TRANSCRIPT_LENGTH) {
+        try {
+          // Use the parser utility to extract text from any supported file type
+          const text = await extractTextFromFile(file);
+          setTranscript(text);
+
+          // Validate length after setting
+          if (text.length > MAX_TRANSCRIPT_LENGTH) {
+            setValidationError(
+              `Transcript is too long (${text.length.toLocaleString()} characters). Maximum allowed is ${MAX_TRANSCRIPT_LENGTH.toLocaleString()} characters.`
+            );
+          } else {
+            setValidationError(null);
+          }
+        } catch (error) {
+          console.error('Error extracting text from file:', error);
           setValidationError(
-            `Transcript is too long (${text.length.toLocaleString()} characters). Maximum allowed is ${MAX_TRANSCRIPT_LENGTH.toLocaleString()} characters.`
+            `Failed to extract text from file: ${error instanceof Error ? error.message : 'Unknown error'}`
           );
-        } else {
-          setValidationError(null);
         }
       }
     },
@@ -200,7 +214,7 @@ export default function Home() {
                         : 'Drop your transcript file here'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Supports .txt, .json, .srt, .vtt files
+                      Supports .txt, .md, .json, .srt, .vtt, .pdf, .doc, .docx files
                     </p>
                   </>
                 )}

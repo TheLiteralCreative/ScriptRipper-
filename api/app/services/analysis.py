@@ -1,10 +1,15 @@
 """Transcript analysis service."""
 
+import sys
+from pathlib import Path
 from typing import Dict, Any
-from decimal import Decimal
+
+# Add shared path for shared analysis engine
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "shared"))
 
 from app.models.profile import Profile
 from app.services.llm import LLMProviderFactory
+from analysis_engine import TranscriptAnalyzer
 
 
 class AnalysisService:
@@ -52,49 +57,20 @@ class AnalysisService:
         system_prompt = profile.prompts.get("system", "")
         tasks = profile.prompts.get("tasks", {})
 
-        # Track metrics
-        total_input_tokens = 0
-        total_output_tokens = 0
-        total_cost = Decimal("0.00")
-
-        # Execute each task
-        results = {}
-        for task_name, task_prompt in tasks.items():
-            # Build full prompt with transcript
-            full_prompt = f"""
-TRANSCRIPT:
-{transcript}
-
-TASK:
-{task_prompt}
-"""
-
-            # Generate response
-            response = await provider.generate(
-                prompt=full_prompt.strip(),
-                system_prompt=system_prompt,
-                temperature=0.7,
-            )
-
-            # Store result
-            results[task_name] = response.content
-
-            # Accumulate metrics
-            total_input_tokens += response.input_tokens
-            total_output_tokens += response.output_tokens
-            if response.cost:
-                total_cost += Decimal(str(response.cost))
-
-        return {
-            "results": results,
-            "metadata": {
+        # Use shared analysis engine
+        result = await TranscriptAnalyzer.analyze(
+            llm_provider=provider,
+            transcript=transcript,
+            system_prompt=system_prompt,
+            tasks=tasks,
+            temperature=0.7,
+            extra_metadata={
                 "profile_key": profile.key,
                 "profile_version": profile.version,
-                "provider": provider.provider_name,
-                "model": response.model,
-                "input_tokens": total_input_tokens,
-                "output_tokens": total_output_tokens,
-                "total_tokens": total_input_tokens + total_output_tokens,
-                "total_cost": float(total_cost),
-            },
+            }
+        )
+
+        return {
+            "results": result.results,
+            "metadata": result.metadata,
         }

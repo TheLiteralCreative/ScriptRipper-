@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     PURELYMAIL_SMTP_PORT: int = Field(default=587)
     PURELYMAIL_SMTP_USER: Optional[str] = Field(default=None)
     PURELYMAIL_SMTP_PASS: Optional[str] = Field(default=None)
-    FROM_EMAIL: str = Field(default="noreply@scriptripper.dev")
+    FROM_EMAIL: str = Field(default="noreply@scriptripper.com")
     MAGIC_LINK_EXPIRE_MINUTES: int = Field(default=15)
 
     # Email (Legacy - SendGrid)
@@ -85,7 +85,7 @@ class Settings(BaseSettings):
 
     # File Upload
     MAX_UPLOAD_SIZE_MB: int = Field(default=50)
-    ALLOWED_EXTENSIONS: str = Field(default="json,txt,srt,vtt")
+    ALLOWED_EXTENSIONS: str = Field(default="json,txt,srt,vtt,md,pdf,doc,docx")
 
     # Transcript Limits
     MAX_TRANSCRIPT_LENGTH: int = Field(default=500000)  # 500K characters (~125K tokens)
