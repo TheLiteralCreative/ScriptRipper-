@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Add shared path for shared analysis engine
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "shared"))
+# Docker structure: /app/api/app/services/analysis.py -> /app/shared/
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "shared"))
 
 from app.models.profile import Profile
 from app.services.llm import LLMProviderFactory
