@@ -1,5 +1,6 @@
 'use client';
 
+// File upload with PDF, Word, and Markdown support
 import { useState, useEffect, type RefCallback, type AnimationEventHandler } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
